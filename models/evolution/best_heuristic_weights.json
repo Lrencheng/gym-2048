@@ -1,0 +1,28 @@
+{
+  "seed": 42,
+  "config": {
+    "env_id": "gymnasium_2048:gymnasium_2048/TwentyFortyEight-v0",
+    "seed": 42,
+    "population_size": 8,
+    "generations": 5,
+    "episodes_per_candidate": 5,
+    "elite_size": 2,
+    "tournament_size": 3,
+    "crossover_rate": 0.8,
+    "mutation_rate": 0.25,
+    "mutation_scale": 0.15
+  },
+  "fitness": 11180.0,
+  "mean_score": 11180.0,
+  "max_tile": 2048,
+  "mean_steps": 647.8,
+  "weights": {
+    "empty_cells": 16.790964579154306,
+    "smoothness": 0.5119403252049946,
+    "monotonicity": 2.9229274666809846,
+    "corner_max": 3.112394072697744,
+    "merge_potential": 7.560589933091611,
+    "edge_bonus": 0.06794786080725981,
+    "reward": 1.734142419906245
+  }
+}
