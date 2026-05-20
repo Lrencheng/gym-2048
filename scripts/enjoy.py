@@ -1,10 +1,11 @@
 import argparse
-from typing import Any
+from typing import Any, Protocol
 
 import gymnasium as gym
 import numpy as np
 from tqdm import trange
 
+from gymnasium_2048.agents.expectimax import ExpectimaxPolicy
 from gymnasium_2048.agents.heuristic import HeuristicPolicy
 from gymnasium_2048.agents.ntuple import (
     NTupleNetworkBasePolicy,
@@ -12,6 +13,12 @@ from gymnasium_2048.agents.ntuple import (
     NTupleNetworkTDPolicy,
     NTupleNetworkTDPolicySmall,
 )
+from gymnasium_2048.agents.supervised_cnn import SupervisedCNNPolicy
+
+
+class PredictPolicy(Protocol):
+    def predict(self, state: np.ndarray) -> int:
+        ...
 
 
 def parse_args() -> argparse.Namespace:
@@ -21,9 +28,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--algo",
+        "--agent",
+        dest="algo",
         default="tdl",
-        help="RL Algorithm",
-        choices=["ql", "tdl", "tdl-small", "heuristic"],
+        help="agent or RL algorithm",
+        choices=["ql", "tdl", "tdl-small", "heuristic", "expectimax", "supervised_cnn"],
     )
     parser.add_argument(
         "--env",
@@ -33,48 +42,55 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "-i",
         "--trained-agent",
+        "--checkpoint",
+        dest="trained_agent",
         default="",
-        help="path to a trained agent",
+        help="path to a trained agent or checkpoint",
     )
+    parser.add_argument("-n", "--n-episodes", type=int, default=1, help="number of episodes")
+    parser.add_argument("--depth", type=int, default=2, help="Expectimax search depth")
     parser.add_argument(
-        "-n",
-        "--n-episodes",
+        "--chance-samples",
         type=int,
-        default=1,
-        help="number of episodes",
+        help="sample empty cells at Expectimax chance nodes above the full threshold",
     )
     parser.add_argument(
-        "--seed",
+        "--full-chance-empty-threshold",
         type=int,
-        default=42,
-        help="random generator seed",
+        default=6,
+        help="empty-cell count at or below which Expectimax chance nodes enumerate all cells",
     )
-    parser.add_argument(
-        "--record-video",
-        action="store_true",
-        help="flag to record videos of episodes",
-    )
-    parser.add_argument(
-        "--video-folder",
-        default="videos",
-        help="path to videos folder",
-    )
-    args = parser.parse_args()
-    return args
+    parser.add_argument("--device", default="cpu", help="device for supervised CNN")
+    parser.add_argument("--seed", type=int, default=42, help="random generator seed")
+    parser.add_argument("--record-video", action="store_true", help="record videos")
+    parser.add_argument("--video-folder", default="videos", help="path to videos folder")
+    return parser.parse_args()
 
 
-def make_policy(algo: str, trained_agent: str) -> NTupleNetworkBasePolicy | HeuristicPolicy:
-    """
-    Makes the policy to enjoy.
-
-    :param algo: Name of the algorithm.
-    :param trained_agent: Path to a trained agent.
-    :return: Policy.
-    """
+def make_policy(
+    algo: str,
+    trained_agent: str = "",
+    depth: int = 2,
+    seed: int | None = None,
+    device: str = "cpu",
+    chance_samples: int | None = None,
+    full_chance_empty_threshold: int = 6,
+) -> PredictPolicy:
     if algo == "heuristic":
         return HeuristicPolicy()
+    if algo == "expectimax":
+        return ExpectimaxPolicy(
+            depth=depth,
+            seed=seed,
+            chance_samples=chance_samples,
+            full_chance_empty_threshold=full_chance_empty_threshold,
+        )
+    if algo == "supervised_cnn":
+        if not trained_agent:
+            raise ValueError("supervised_cnn requires --checkpoint")
+        return SupervisedCNNPolicy.load(trained_agent, device=device, seed=seed)
 
-    algo_policy_map = {
+    algo_policy_map: dict[str, type[NTupleNetworkBasePolicy]] = {
         "ql": NTupleNetworkQLearningPolicy,
         "tdl": NTupleNetworkTDPolicy,
         "tdl-small": NTupleNetworkTDPolicySmall,
@@ -83,17 +99,7 @@ def make_policy(algo: str, trained_agent: str) -> NTupleNetworkBasePolicy | Heur
     return policy.load(trained_agent)
 
 
-def play_game(
-    env: gym.Env,
-    policy: NTupleNetworkBasePolicy,
-) -> dict[str, Any]:
-    """
-    Plays a 2048 game.
-
-    :param env: Game environment.
-    :param policy: Policy to use.
-    :return: Info at the end of the game.
-    """
+def play_game(env: gym.Env, policy: PredictPolicy) -> dict[str, Any]:
     _observation, info = env.reset()
     terminated = truncated = False
 
@@ -120,7 +126,15 @@ def enjoy() -> None:
     else:
         env = gym.make(args.env, render_mode="human")
 
-    policy = make_policy(algo=args.algo, trained_agent=args.trained_agent)
+    policy = make_policy(
+        algo=args.algo,
+        trained_agent=args.trained_agent,
+        depth=args.depth,
+        seed=args.seed,
+        device=args.device,
+        chance_samples=args.chance_samples,
+        full_chance_empty_threshold=args.full_chance_empty_threshold,
+    )
 
     for _ in trange(args.n_episodes, desc="Enjoy"):
         play_game(env=env, policy=policy)

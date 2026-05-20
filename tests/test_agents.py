@@ -1,6 +1,4 @@
 # pylint: disable=redefined-outer-name
-from tempfile import NamedTemporaryFile
-
 import numpy as np
 import pytest
 
@@ -39,15 +37,15 @@ def test_ntuple_network_num_weights():
     assert net2.num_weights() == 22_882_500
 
 
-def test_ntuple_network_save_load():
+def test_ntuple_network_save_load(tmp_path):
     shape = (15, 15, 15, 15)
     net1 = NTupleNetwork(shapes=[shape for _ in range(17)])
     for i in range(17):
         net1.weights[i] = np.random.rand(*shape)
 
-    with NamedTemporaryFile("w") as file:
-        net1.save(file.name)
-        net2 = NTupleNetwork.load(file.name)
+    path = tmp_path / "network.zip"
+    net1.save(path)
+    net2 = NTupleNetwork.load(path)
 
     assert net1.num_weights() == net2.num_weights()
 

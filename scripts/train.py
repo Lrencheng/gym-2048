@@ -13,6 +13,10 @@ from gymnasium_2048.agents.ntuple import (
     NTupleNetworkTDPolicy,
     NTupleNetworkTDPolicySmall,
 )
+from gymnasium_2048.agents.supervised_cnn import (
+    SupervisedTrainingConfig,
+    train_supervised_cnn,
+)
 
 logging.basicConfig(
     filename="train.log",
@@ -31,9 +35,11 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--algo",
+        "--agent",
+        dest="algo",
         default="tdl",
-        help="RL Algorithm",
-        choices=["ql", "tdl", "tdl-small"],
+        help="agent or RL algorithm",
+        choices=["ql", "tdl", "tdl-small", "supervised_cnn"],
     )
     parser.add_argument(
         "--env",
@@ -44,39 +50,34 @@ def parse_args() -> argparse.Namespace:
         "-i",
         "--trained-agent",
         default="",
-        help="path to a pretrained agent to continue training",
+        help="path to a pretrained n-tuple agent to continue training",
     )
     parser.add_argument(
         "-n",
         "--n-episodes",
         type=int,
         default=100_000,
-        help="number of episodes",
+        help="number of n-tuple training episodes",
     )
     parser.add_argument(
         "--eval-freq",
         type=int,
         default=5_000,
-        help="evaluate the agent every n episodes (if negative, no evaluation)",
+        help="evaluate the n-tuple agent every n episodes",
     )
     parser.add_argument(
         "--eval-episodes",
         type=int,
         default=1000,
-        help="number of episodes to use for evaluation",
+        help="number of episodes to use for n-tuple evaluation",
     )
     parser.add_argument(
         "--save-freq",
         type=int,
         default=-1,
-        help="save the model every n steps (if negative, no checkpoint)",
+        help="save the n-tuple model every n steps (if negative, final only)",
     )
-    parser.add_argument(
-        "--seed",
-        type=int,
-        default=42,
-        help="random generator seed",
-    )
+    parser.add_argument("--seed", type=int, default=42, help="random generator seed")
     parser.add_argument(
         "--learning-rate",
         type=float,
@@ -86,21 +87,73 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "-o",
         "--out-dir",
+        "--out",
+        dest="out_dir",
         default="models",
         help="path to the directory containing output models",
     )
-    args = parser.parse_args()
-    return args
+
+    parser.add_argument("--data", help="Expectimax .npz data for supervised CNN")
+    parser.add_argument("--epochs", type=int, default=1, help="supervised epochs")
+    parser.add_argument("--batch-size", type=int, default=64, help="supervised batch size")
+    parser.add_argument(
+        "--weight-decay",
+        type=float,
+        default=1.0e-4,
+        help="supervised AdamW weight decay",
+    )
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=1.0,
+        help="soft-label distillation temperature",
+    )
+    parser.add_argument("--device", default="cpu", help="supervised training device")
+    parser.add_argument(
+        "--validation-fraction",
+        type=float,
+        default=0.2,
+        help="fraction of data used for validation",
+    )
+    parser.add_argument(
+        "--no-high-score-weighting",
+        action="store_true",
+        help="disable conservative high-score sample weighting",
+    )
+    parser.add_argument(
+        "--score-weight",
+        type=float,
+        default=0.5,
+        help="final-score component for supervised sample weighting",
+    )
+    parser.add_argument(
+        "--tile-weight",
+        type=float,
+        default=0.4,
+        help="final-max-tile component for supervised sample weighting",
+    )
+    parser.add_argument(
+        "--late-game-weight",
+        type=float,
+        default=0.2,
+        help="step-index component for supervised sample weighting",
+    )
+    parser.add_argument(
+        "--difficulty-weight",
+        type=float,
+        default=0.2,
+        help="low-empty-cell component for supervised sample weighting",
+    )
+    parser.add_argument(
+        "--max-sample-weight",
+        type=float,
+        default=3.0,
+        help="clip value before supervised sample weights are normalized",
+    )
+    return parser.parse_args()
 
 
 def make_policy(algo: str, trained_agent: str) -> NTupleNetworkBasePolicy:
-    """
-    Makes the policy to train.
-
-    :param algo: Name of the algorithm.
-    :param trained_agent: Path to a trained agent.
-    :return: Policy.
-    """
     algo_policy_map = {
         "ql": NTupleNetworkQLearningPolicy,
         "tdl": NTupleNetworkTDPolicy,
@@ -116,15 +169,6 @@ def play_game(
     learn: bool = False,
     learning_rate: float = 0.0025,
 ) -> dict[str, Any]:
-    """
-    Plays a 2048 game.
-
-    :param env: Game environment.
-    :param policy: Policy to use.
-    :param learn: True to enable learning, False otherwise. Default: False.
-    :param learning_rate: Learning rate to use during training. Default: 0.0025.
-    :return: Info at the end of the game.
-    """
     _observation, info = env.reset()
     terminated = truncated = False
 
@@ -149,20 +193,6 @@ def evaluate(
     policy: NTupleNetworkBasePolicy,
     eval_episodes: int,
 ) -> dict[str, Any]:
-    """
-    Evaluates the performance of the current policy.
-
-    It returns the three following measures:
-
-    - Winning rate: the fraction of games the agent won (i.e. reached a 2048-tile)
-    - Mean score: the average number of points obtained during a game
-    - Max tile: the value of the maximum tile obtained
-
-    :param env: Game environment.
-    :param policy: Policy to evaluate.
-    :param eval_episodes: Number of games to play.
-    :return: Performance measures.
-    """
     winning_rate = 0
     total_score = 0
     max_tile = 0
@@ -183,12 +213,6 @@ def evaluate(
 
 
 def log_eval_metrics(episode: int, metrics: dict[str, Any]) -> None:
-    """
-    Logs the evaluation metrics for an episode.
-
-    :param episode: Episode number.
-    :param metrics: Performance measures.
-    """
     logger.info(
         "episode %d: winning rate = %.2f, mean score = %.2f, max tile = %d",
         episode,
@@ -199,12 +223,6 @@ def log_eval_metrics(episode: int, metrics: dict[str, Any]) -> None:
 
 
 def save_best_policy(out_dir: str, policy: NTupleNetworkBasePolicy) -> None:
-    """
-    Saves the best policy.
-
-    :param out_dir: Path to output directory.
-    :param policy: Policy to save.
-    """
     best_model_path = os.path.join(out_dir, "best_n_tuple_network_policy.zip")
     logger.info("new best model saved to %s", best_model_path)
     policy.save(path=best_model_path)
@@ -215,20 +233,48 @@ def save_checkpoint(
     out_dir: str,
     policy: NTupleNetworkBasePolicy,
 ) -> None:
-    """
-    Saves a checkpoint.
-
-    :param episode: Episode number.
-    :param out_dir: Output directory.
-    :param policy: Policy to save.
-    """
     checkpoint_path = os.path.join(out_dir, f"checkpoint_episode_{episode}.zip")
     logger.info("checkpoint saved to %s", checkpoint_path)
     policy.save(path=checkpoint_path)
 
 
+def train_supervised_from_args(args: argparse.Namespace) -> None:
+    if not args.data:
+        raise ValueError("supervised_cnn training requires --data")
+
+    config = SupervisedTrainingConfig(
+        data_path=args.data,
+        out_dir=args.out_dir,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+        learning_rate=args.learning_rate,
+        weight_decay=args.weight_decay,
+        temperature=args.temperature,
+        validation_fraction=args.validation_fraction,
+        device=args.device,
+        seed=args.seed,
+        use_high_score_weighting=not args.no_high_score_weighting,
+        score_weight=args.score_weight,
+        tile_weight=args.tile_weight,
+        late_game_weight=args.late_game_weight,
+        difficulty_weight=args.difficulty_weight,
+        max_sample_weight=args.max_sample_weight,
+    )
+    result = train_supervised_cnn(config)
+    print(
+        "Supervised CNN training complete: "
+        f"best_validation_loss={result['best_validation_loss']:.6f}, "
+        f"best={result['best_checkpoint']}, "
+        f"last={result['last_checkpoint']}"
+    )
+
+
 def train() -> None:
     args = parse_args()
+
+    if args.algo == "supervised_cnn":
+        train_supervised_from_args(args)
+        return
 
     np.random.seed(args.seed)
     env = gym.make(args.env)
@@ -247,7 +293,10 @@ def train() -> None:
                 learning_rate=args.learning_rate,
             )
 
-            if e % args.eval_freq == 0 or e == args.n_episodes:
+            should_evaluate = args.eval_freq > 0 and (
+                e % args.eval_freq == 0 or e == args.n_episodes
+            )
+            if should_evaluate:
                 metrics = evaluate(
                     env=env,
                     policy=policy,
@@ -262,11 +311,13 @@ def train() -> None:
                 metrics["best_mean_score"] = best_mean_score
                 pbar.set_postfix(metrics)
 
-            if e % args.save_freq == 0 or e == args.n_episodes:
+            should_save = e == args.n_episodes or (
+                args.save_freq > 0 and e % args.save_freq == 0
+            )
+            if should_save:
                 save_checkpoint(episode=e, out_dir=args.out_dir, policy=policy)
 
     env.close()
-
     logger.info("end training n-tuple network")
 
 

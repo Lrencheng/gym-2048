@@ -33,6 +33,7 @@ training = [
     "matplotlib==3.10.7",
     "moviepy==2.2.1",
     "pandas==2.3.3",
+    "torch>=2.0",
     "tqdm==4.67.1",
 ]
 testing = ["pytest"]
