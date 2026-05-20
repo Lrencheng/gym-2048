@@ -12,7 +12,7 @@
 
 1. **启发式搜索 + 遗传算法调参** — 设计多维度的启发式评价函数，对棋盘的空格数、平滑度、单调性、合并潜力等特征进行加权评分，并使用遗传算法自动搜索最优权重组合。
 
-2. **自监督学习** — 不依赖外部标注，让模型通过游戏自身的交互过程进行学习，自主发现有效的决策策略。
+2. **监督学习** — 使用当前最强的Expertimax算法生成教师数据，构建一个小型的CNN学生网络对教师数据进行蒸馏；全程数据集和训练过程支持高分数据加权，使用mask进行违规动作抑制。
 
 3. **强化学习** — 实现基于 N-Tuple Network 的强化学习算法（TD-Learning / Q-Learning），通过与环境的持续交互优化决策策略。
 
@@ -48,6 +48,13 @@ python scripts/enjoy.py --algo heuristic -n 5
 
 #  遗传算法调参
 python -m gymnasium_2048.agents.evolution.run_evolution --generations 20 --population-size 20 --episodes 50 --seed 42 --out-dir models\evolution_large
+
+# Expertimax教师数据生成
+## 稳健指令
+python scripts\generate_expectimax_data.py --episodes 1000 --depth 2 --chance-samples 6 --workers 4 --out data\expectimax_d2_sampled_1000eps.npz --seed 42
+
+#CPU核心充足
+python scripts\generate_expectimax_data.py --episodes 1000 --depth 2 --chance-samples 6 --workers 8 --out data\expectimax_d2_sampled_1000eps_w8.npz --seed 42
 ```
 ## 依赖
 
