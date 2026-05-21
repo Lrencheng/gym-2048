@@ -33,7 +33,7 @@ class SupervisedTrainingConfig:
     weight_decay: float = 1.0e-4
     temperature: float = 1.0
     validation_fraction: float = 0.2
-    device: str = "cpu"
+    device: str = "auto"
     seed: int = 42
     use_high_score_weighting: bool = True
     score_weight: float = 0.5
@@ -41,6 +41,18 @@ class SupervisedTrainingConfig:
     late_game_weight: float = 0.2
     difficulty_weight: float = 0.2
     max_sample_weight: float = 3.0
+
+
+def resolve_device(device: str) -> torch.device:
+    requested = device.lower()
+    if requested == "auto":
+        return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if requested.startswith("cuda") and not torch.cuda.is_available():
+        raise RuntimeError(
+            "CUDA was requested, but torch.cuda.is_available() is False. "
+            "Use --device cpu or install a CUDA-enabled PyTorch build."
+        )
+    return torch.device(device)
 
 
 def _save_checkpoint(
@@ -73,10 +85,11 @@ def _run_epoch(
     losses: list[float] = []
 
     for boards, legal_masks, target_probs, weights in loader:
-        boards = boards.to(device)
-        legal_masks = legal_masks.to(device)
-        target_probs = target_probs.to(device)
-        weights = weights.to(device)
+        non_blocking = device.type == "cuda"
+        boards = boards.to(device, non_blocking=non_blocking)
+        legal_masks = legal_masks.to(device, non_blocking=non_blocking)
+        target_probs = target_probs.to(device, non_blocking=non_blocking)
+        weights = weights.to(device, non_blocking=non_blocking)
 
         if optimizer is not None:
             optimizer.zero_grad(set_to_none=True)
@@ -102,6 +115,9 @@ def _run_epoch(
 def train_supervised_cnn(config: SupervisedTrainingConfig) -> dict[str, Any]:
     torch.manual_seed(config.seed)
     np.random.seed(config.seed)
+    device = resolve_device(config.device)
+    if device.type == "cuda":
+        torch.cuda.manual_seed_all(config.seed)
 
     out_dir = Path(config.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -139,10 +155,20 @@ def train_supervised_cnn(config: SupervisedTrainingConfig) -> dict[str, Any]:
         weight_config=weight_config,
     )
 
-    train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=config.batch_size, shuffle=False)
+    pin_memory = device.type == "cuda"
+    train_loader = DataLoader(
+        train_dataset,
+        batch_size=config.batch_size,
+        shuffle=True,
+        pin_memory=pin_memory,
+    )
+    val_loader = DataLoader(
+        val_dataset,
+        batch_size=config.batch_size,
+        shuffle=False,
+        pin_memory=pin_memory,
+    )
 
-    device = torch.device(config.device)
     model = SupervisedCNN(CNNConfig()).to(device)
     optimizer = torch.optim.AdamW(
         model.parameters(),
@@ -152,6 +178,8 @@ def train_supervised_cnn(config: SupervisedTrainingConfig) -> dict[str, Any]:
 
     best_validation_loss = float("inf")
     history: list[dict[str, float | int]] = []
+
+    print(f"Supervised CNN training device: {device}")
 
     for epoch in trange(1, config.epochs + 1, desc="Supervised train", unit="epoch"):
         train_loss = _run_epoch(
@@ -205,4 +233,5 @@ def train_supervised_cnn(config: SupervisedTrainingConfig) -> dict[str, Any]:
         "best_validation_loss": best_validation_loss,
         "best_checkpoint": str(out_dir / "best.pt"),
         "last_checkpoint": str(out_dir / "last.pt"),
+        "device": str(device),
     }

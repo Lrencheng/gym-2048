@@ -163,6 +163,8 @@ cython_debug/
 *.md
 !README.md
 *.npz
+*.pt
+*.json
 
 
 

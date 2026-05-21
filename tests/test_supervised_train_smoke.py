@@ -4,6 +4,7 @@ from gymnasium_2048.agents.expectimax import (
 )
 from gymnasium_2048.agents.supervised_cnn import (
     SupervisedTrainingConfig,
+    resolve_device,
     train_supervised_cnn,
 )
 
@@ -27,6 +28,7 @@ def test_supervised_train_smoke(tmp_path):
             epochs=1,
             batch_size=2,
             seed=9,
+            device="cpu",
             use_high_score_weighting=True,
         )
     )
@@ -34,3 +36,9 @@ def test_supervised_train_smoke(tmp_path):
     assert (out_dir / "best.pt").exists()
     assert (out_dir / "last.pt").exists()
     assert result["best_validation_loss"] >= 0.0
+
+
+def test_resolve_device_auto_returns_valid_torch_device():
+    device = resolve_device("auto")
+
+    assert device.type in {"cpu", "cuda"}

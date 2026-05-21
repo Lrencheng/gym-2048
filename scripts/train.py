@@ -108,7 +108,11 @@ def parse_args() -> argparse.Namespace:
         default=1.0,
         help="soft-label distillation temperature",
     )
-    parser.add_argument("--device", default="cpu", help="supervised training device")
+    parser.add_argument(
+        "--device",
+        default="auto",
+        help="supervised training device: auto, cpu, cuda, or cuda:0",
+    )
     parser.add_argument(
         "--validation-fraction",
         type=float,
@@ -263,6 +267,7 @@ def train_supervised_from_args(args: argparse.Namespace) -> None:
     result = train_supervised_cnn(config)
     print(
         "Supervised CNN training complete: "
+        f"device={result['device']}, "
         f"best_validation_loss={result['best_validation_loss']:.6f}, "
         f"best={result['best_checkpoint']}, "
         f"last={result['last_checkpoint']}"

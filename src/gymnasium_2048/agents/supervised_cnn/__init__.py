@@ -12,5 +12,6 @@ from gymnasium_2048.agents.supervised_cnn.policy import (
 )
 from gymnasium_2048.agents.supervised_cnn.train import (
     SupervisedTrainingConfig,
+    resolve_device,
     train_supervised_cnn,
 )

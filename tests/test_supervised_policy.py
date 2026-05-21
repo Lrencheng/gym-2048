@@ -30,6 +30,7 @@ def test_supervised_policy_loads_and_predicts_legal_action(tmp_path):
             epochs=1,
             batch_size=2,
             seed=11,
+            device="cpu",
         )
     )
 

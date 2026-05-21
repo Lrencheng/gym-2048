@@ -108,6 +108,9 @@ python scripts/generate_expectimax_data.py --episodes 1000 --depth 2 --chance-sa
 
 #CPU核心充足
 python scripts/generate_expectimax_data.py --episodes 1000 --depth 2 --chance-samples 6 --workers 8 --out data/expectimax_d2_sampled_1000eps_w8.npz --seed 42
+
+#训练学生网络
+python scripts\train.py --agent supervised_cnn --data data\expectimax_d2_sampled_1000eps.npz --out checkpoints\supervised_cnn_d2_sampled --epochs 10 --batch-size 2048 --learning-rate 0.001 --weight-decay 0.0001 --temperature 1.0 --device cuda
 ```
 ## 依赖
 
