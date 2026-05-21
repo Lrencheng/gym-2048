@@ -3,6 +3,8 @@ from __future__ import annotations
 import csv
 import json
 import shutil
+import time
+from contextlib import nullcontext
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -21,6 +23,7 @@ from gymnasium_2048.agents.supervised_cnn.data import (
     WeightConfig,
     split_indices,
 )
+from gymnasium_2048.agents.supervised_cnn.encoding import encode_boards_torch
 from gymnasium_2048.agents.supervised_cnn.loss import masked_soft_cross_entropy
 from gymnasium_2048.agents.supervised_cnn.model import (
     CNNConfig,
@@ -48,6 +51,20 @@ class SupervisedTrainingConfig:
     difficulty_weight: float = 0.2
     max_sample_weight: float = 3.0
     copy_training_data: bool = True
+    num_workers: int = 4
+    persistent_workers: bool = True
+    prefetch_factor: int | None = 4
+    pin_memory: bool = True
+    drop_last: bool = False
+    encode_on_device: bool = True
+    compute_train_accuracy: bool = False
+    validation_interval: int = 1
+    validation_max_samples: int | None = 100_000
+    amp: bool = True
+    allow_tf32: bool = True
+    torch_compile: bool = False
+    profile: bool = True
+    profile_batches: int = 50
 
 
 def resolve_device(device: str) -> torch.device:
@@ -81,57 +98,177 @@ def _save_checkpoint(
     torch.save(payload, path)
 
 
+def _make_grad_scaler(enabled: bool) -> torch.amp.GradScaler:
+    try:
+        return torch.amp.GradScaler("cuda", enabled=enabled)
+    except TypeError:
+        return torch.cuda.amp.GradScaler(enabled=enabled)
+
+
+def _autocast_context(device: torch.device, enabled: bool):
+    if enabled:
+        return torch.amp.autocast(device_type=device.type)
+    return nullcontext()
+
+
+def _sync_if_profile(device: torch.device, enabled: bool) -> None:
+    if enabled and device.type == "cuda":
+        torch.cuda.synchronize(device)
+
+
+def _prepare_boards(
+    boards: torch.Tensor,
+    device: torch.device,
+    input_channels: int,
+    encode_on_device: bool,
+    non_blocking: bool,
+) -> torch.Tensor:
+    if not encode_on_device:
+        return boards.to(device, non_blocking=non_blocking)
+
+    boards = boards.to(device, dtype=torch.long, non_blocking=non_blocking)
+    return encode_boards_torch(boards, num_channels=input_channels)
+
+
 def _run_epoch(
     model: SupervisedCNN,
     loader: DataLoader,
     device: torch.device,
     temperature: float,
     optimizer: torch.optim.Optimizer | None = None,
+    scaler: torch.amp.GradScaler | None = None,
+    amp_enabled: bool = False,
+    encode_on_device: bool = False,
+    input_channels: int = 16,
+    compute_accuracy: bool = True,
+    profile: bool = False,
+    profile_batches: int = 50,
 ) -> dict[str, float]:
     model.train(optimizer is not None)
-    losses: list[float] = []
     total_examples = 0
-    top1_correct = 0
-    top2_correct = 0
+    total_loss = torch.zeros((), device=device)
+    top1_correct = torch.zeros((), device=device)
+    top2_correct = torch.zeros((), device=device)
+    data_wait_seconds = 0.0
+    transfer_seconds = 0.0
+    forward_loss_seconds = 0.0
+    backward_seconds = 0.0
+    profile_batch_count = 0
+    start_time = time.perf_counter()
 
-    for boards, legal_masks, target_probs, actions, weights in loader:
+    iterator = iter(loader)
+    batch_index = 0
+    while True:
+        data_start = time.perf_counter()
+        try:
+            boards, legal_masks, target_probs, actions, weights = next(iterator)
+        except StopIteration:
+            break
+        data_wait_seconds += time.perf_counter() - data_start
+
         non_blocking = device.type == "cuda"
-        boards = boards.to(device, non_blocking=non_blocking)
+        should_profile_batch = profile and (
+            profile_batches <= 0 or batch_index < profile_batches
+        )
+
+        _sync_if_profile(device, should_profile_batch)
+        transfer_start = time.perf_counter()
+        batch_size = int(actions.numel())
+        boards = _prepare_boards(
+            boards=boards,
+            device=device,
+            input_channels=input_channels,
+            encode_on_device=encode_on_device,
+            non_blocking=non_blocking,
+        )
         legal_masks = legal_masks.to(device, non_blocking=non_blocking)
         target_probs = target_probs.to(device, non_blocking=non_blocking)
-        actions = actions.to(device, non_blocking=non_blocking)
+        if compute_accuracy:
+            actions = actions.to(device, non_blocking=non_blocking)
         weights = weights.to(device, non_blocking=non_blocking)
+        _sync_if_profile(device, should_profile_batch)
+        transfer_seconds += time.perf_counter() - transfer_start
 
         if optimizer is not None:
             optimizer.zero_grad(set_to_none=True)
 
-        logits = model(boards)
-        loss = masked_soft_cross_entropy(
-            logits=logits,
-            target_probs=target_probs,
-            legal_mask=legal_masks,
-            sample_weight=weights,
-            temperature=temperature,
-        )
+        _sync_if_profile(device, should_profile_batch)
+        forward_start = time.perf_counter()
+        with _autocast_context(device, amp_enabled):
+            logits = model(boards)
+            loss = masked_soft_cross_entropy(
+                logits=logits,
+                target_probs=target_probs,
+                legal_mask=legal_masks,
+                sample_weight=weights,
+                temperature=temperature,
+            )
+        _sync_if_profile(device, should_profile_batch)
+        forward_loss_seconds += time.perf_counter() - forward_start
 
         if optimizer is not None:
-            loss.backward()
-            optimizer.step()
+            _sync_if_profile(device, should_profile_batch)
+            backward_start = time.perf_counter()
+            if scaler is not None and scaler.is_enabled():
+                scaler.scale(loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                loss.backward()
+                optimizer.step()
+            _sync_if_profile(device, should_profile_batch)
+            backward_seconds += time.perf_counter() - backward_start
 
-        losses.append(float(loss.detach().cpu()))
+        total_examples += batch_size
+        total_loss = total_loss + loss.detach() * batch_size
         with torch.no_grad():
-            masked_logits = logits.masked_fill(~legal_masks.bool(), -1.0e9)
-            top2 = torch.topk(masked_logits, k=2, dim=-1).indices
-            total_examples += int(actions.numel())
-            top1_correct += int((top2[:, 0] == actions).sum().detach().cpu())
-            top2_correct += int((top2 == actions.unsqueeze(-1)).any(dim=-1).sum().detach().cpu())
+            if compute_accuracy:
+                masked_logits = logits.float().masked_fill(
+                    ~legal_masks.bool(),
+                    -1.0e9,
+                )
+                top2 = torch.topk(masked_logits, k=2, dim=-1).indices
+                top1_correct = top1_correct + (top2[:, 0] == actions).sum()
+                top2_correct = top2_correct + (
+                    top2 == actions.unsqueeze(-1)
+                ).any(dim=-1).sum()
+
+        if should_profile_batch:
+            profile_batch_count += 1
+        batch_index += 1
 
     if total_examples == 0:
-        return {"loss": 0.0, "top1_accuracy": 0.0, "top2_accuracy": 0.0}
+        return {
+            "loss": 0.0,
+            "top1_accuracy": 0.0,
+            "top2_accuracy": 0.0,
+            "samples_per_second": 0.0,
+            "data_wait_seconds": 0.0,
+            "transfer_seconds": 0.0,
+            "forward_loss_seconds": 0.0,
+            "backward_seconds": 0.0,
+            "profiled_batches": 0.0,
+        }
+
+    total_seconds = time.perf_counter() - start_time
+    loss_value = float((total_loss / total_examples).detach().cpu())
+    if compute_accuracy:
+        top1_accuracy = float((top1_correct / total_examples).detach().cpu())
+        top2_accuracy = float((top2_correct / total_examples).detach().cpu())
+    else:
+        top1_accuracy = float("nan")
+        top2_accuracy = float("nan")
+
     return {
-        "loss": float(np.mean(losses)) if losses else 0.0,
-        "top1_accuracy": top1_correct / total_examples,
-        "top2_accuracy": top2_correct / total_examples,
+        "loss": loss_value,
+        "top1_accuracy": top1_accuracy,
+        "top2_accuracy": top2_accuracy,
+        "samples_per_second": total_examples / max(total_seconds, 1.0e-9),
+        "data_wait_seconds": data_wait_seconds,
+        "transfer_seconds": transfer_seconds,
+        "forward_loss_seconds": forward_loss_seconds,
+        "backward_seconds": backward_seconds,
+        "profiled_batches": float(profile_batch_count),
     }
 
 
@@ -276,12 +413,57 @@ def _plot_dataset_analysis(
     plt.close(fig)
 
 
+def _limit_indices(
+    indices: np.ndarray,
+    max_samples: int | None,
+    seed: int,
+) -> np.ndarray:
+    if max_samples is None or max_samples <= 0 or len(indices) <= max_samples:
+        return indices
+    rng = np.random.default_rng(seed)
+    selected = rng.choice(indices, size=max_samples, replace=False)
+    return np.asarray(selected, dtype=np.int64)
+
+
+def _seed_worker(worker_id: int) -> None:
+    np.random.seed((torch.initial_seed() + worker_id) % 2**32)
+
+
+def _make_loader(
+    dataset: ExpectimaxDataset,
+    config: SupervisedTrainingConfig,
+    shuffle: bool,
+    pin_memory: bool,
+    drop_last: bool = False,
+) -> DataLoader:
+    generator = torch.Generator()
+    generator.manual_seed(config.seed)
+    num_workers = max(int(config.num_workers), 0)
+    kwargs: dict[str, Any] = {
+        "dataset": dataset,
+        "batch_size": config.batch_size,
+        "shuffle": shuffle,
+        "pin_memory": pin_memory,
+        "num_workers": num_workers,
+        "drop_last": drop_last,
+        "generator": generator,
+    }
+    if num_workers > 0:
+        kwargs["persistent_workers"] = config.persistent_workers
+        kwargs["worker_init_fn"] = _seed_worker
+        if config.prefetch_factor is not None:
+            kwargs["prefetch_factor"] = config.prefetch_factor
+    return DataLoader(**kwargs)
+
+
 def train_supervised_cnn(config: SupervisedTrainingConfig) -> dict[str, Any]:
     torch.manual_seed(config.seed)
     np.random.seed(config.seed)
     device = resolve_device(config.device)
     if device.type == "cuda":
         torch.cuda.manual_seed_all(config.seed)
+        torch.backends.cuda.matmul.allow_tf32 = config.allow_tf32
+        torch.backends.cudnn.allow_tf32 = config.allow_tf32
 
     out_dir = Path(config.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -323,37 +505,49 @@ def train_supervised_cnn(config: SupervisedTrainingConfig) -> dict[str, Any]:
     np.save(artifact_dirs["data"] / "train_indices.npy", train_indices)
     np.save(artifact_dirs["data"] / "validation_indices.npy", val_indices)
     _plot_dataset_analysis(base_dataset, train_indices, val_indices, artifact_dirs["plots"])
-    train_dataset = ExpectimaxDataset(
-        path=config.data_path,
-        indices=train_indices,
-        weight_config=weight_config,
-    )
-    val_dataset = ExpectimaxDataset(
-        path=config.data_path,
+    val_loader_indices = _limit_indices(
         indices=val_indices,
-        weight_config=weight_config,
+        max_samples=config.validation_max_samples,
+        seed=config.seed + 1,
+    )
+    train_dataset = base_dataset.subset(
+        train_indices,
+        encode_boards=not config.encode_on_device,
+    )
+    val_dataset = base_dataset.subset(
+        val_loader_indices,
+        encode_boards=not config.encode_on_device,
     )
 
-    pin_memory = device.type == "cuda"
-    train_loader = DataLoader(
-        train_dataset,
-        batch_size=config.batch_size,
+    pin_memory = bool(config.pin_memory and device.type == "cuda")
+    train_loader = _make_loader(
+        dataset=train_dataset,
+        config=config,
         shuffle=True,
         pin_memory=pin_memory,
+        drop_last=config.drop_last,
     )
-    val_loader = DataLoader(
-        val_dataset,
-        batch_size=config.batch_size,
+    val_loader = _make_loader(
+        dataset=val_dataset,
+        config=config,
         shuffle=False,
         pin_memory=pin_memory,
+        drop_last=False,
     )
 
-    model = SupervisedCNN(CNNConfig()).to(device)
+    raw_model = SupervisedCNN(CNNConfig()).to(device)
+    model = raw_model
+    if config.torch_compile:
+        if not hasattr(torch, "compile"):
+            raise RuntimeError("torch_compile=True requires a PyTorch build with torch.compile")
+        model = torch.compile(model)
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=config.learning_rate,
         weight_decay=config.weight_decay,
     )
+    amp_enabled = bool(config.amp and device.type == "cuda")
+    scaler = _make_grad_scaler(amp_enabled) if amp_enabled else None
 
     best_validation_loss = float("inf")
     history: list[dict[str, float | int]] = []
@@ -367,15 +561,50 @@ def train_supervised_cnn(config: SupervisedTrainingConfig) -> dict[str, Any]:
             device=device,
             temperature=config.temperature,
             optimizer=optimizer,
+            scaler=scaler,
+            amp_enabled=amp_enabled,
+            encode_on_device=config.encode_on_device,
+            input_channels=raw_model.config.input_channels,
+            compute_accuracy=config.compute_train_accuracy,
+            profile=config.profile,
+            profile_batches=config.profile_batches,
         )
-        with torch.no_grad():
-            validation_metrics = _run_epoch(
-                model=model,
-                loader=val_loader,
-                device=device,
-                temperature=config.temperature,
-                optimizer=None,
-            )
+        should_validate = (
+            config.validation_interval <= 1
+            or epoch % config.validation_interval == 0
+            or epoch == config.epochs
+        )
+        if should_validate:
+            validation_start = time.perf_counter()
+            with torch.no_grad():
+                validation_metrics = _run_epoch(
+                    model=model,
+                    loader=val_loader,
+                    device=device,
+                    temperature=config.temperature,
+                    optimizer=None,
+                    scaler=None,
+                    amp_enabled=amp_enabled,
+                    encode_on_device=config.encode_on_device,
+                    input_channels=raw_model.config.input_channels,
+                    compute_accuracy=True,
+                    profile=config.profile,
+                    profile_batches=config.profile_batches,
+                )
+            validation_seconds = time.perf_counter() - validation_start
+        else:
+            validation_metrics = {
+                "loss": float("nan"),
+                "top1_accuracy": float("nan"),
+                "top2_accuracy": float("nan"),
+                "samples_per_second": 0.0,
+                "data_wait_seconds": 0.0,
+                "transfer_seconds": 0.0,
+                "forward_loss_seconds": 0.0,
+                "backward_seconds": 0.0,
+                "profiled_batches": 0.0,
+            }
+            validation_seconds = 0.0
         train_loss = train_metrics["loss"]
         validation_loss = validation_metrics["loss"]
 
@@ -388,21 +617,33 @@ def train_supervised_cnn(config: SupervisedTrainingConfig) -> dict[str, Any]:
                 "validation_top1_accuracy": validation_metrics["top1_accuracy"],
                 "train_top2_accuracy": train_metrics["top2_accuracy"],
                 "validation_top2_accuracy": validation_metrics["top2_accuracy"],
+                "train_samples_per_second": train_metrics["samples_per_second"],
+                "validation_samples_per_second": validation_metrics["samples_per_second"],
+                "train_data_wait_seconds": train_metrics["data_wait_seconds"],
+                "train_transfer_seconds": train_metrics["transfer_seconds"],
+                "train_forward_loss_seconds": train_metrics["forward_loss_seconds"],
+                "train_backward_seconds": train_metrics["backward_seconds"],
+                "validation_data_wait_seconds": validation_metrics["data_wait_seconds"],
+                "validation_transfer_seconds": validation_metrics["transfer_seconds"],
+                "validation_forward_loss_seconds": validation_metrics["forward_loss_seconds"],
+                "validation_seconds": validation_seconds,
+                "validation_samples": int(len(val_loader_indices)),
+                "profiled_batches": train_metrics["profiled_batches"],
             }
         )
         _save_checkpoint(
             path=artifact_dirs["checkpoints"] / "last.pt",
-            model=model,
+            model=raw_model,
             optimizer=optimizer,
             epoch=epoch,
             validation_loss=validation_loss,
             training_config=config,
         )
-        if validation_loss <= best_validation_loss:
+        if should_validate and validation_loss <= best_validation_loss:
             best_validation_loss = validation_loss
             _save_checkpoint(
                 path=artifact_dirs["checkpoints"] / "best.pt",
-                model=model,
+                model=raw_model,
                 optimizer=optimizer,
                 epoch=epoch,
                 validation_loss=validation_loss,

@@ -42,6 +42,20 @@ class SupervisedTrainingYamlConfig:
     difficulty_weight: float = 0.2
     max_sample_weight: float = 3.0
     copy_training_data: bool = True
+    num_workers: int = 4
+    persistent_workers: bool = True
+    prefetch_factor: int | None = 4
+    pin_memory: bool = True
+    drop_last: bool = False
+    encode_on_device: bool = True
+    compute_train_accuracy: bool = False
+    validation_interval: int = 1
+    validation_max_samples: int | None = 100_000
+    amp: bool = True
+    allow_tf32: bool = True
+    torch_compile: bool = False
+    profile: bool = True
+    profile_batches: int = 50
 
 
 def next_supervised_run_dir(root: Path | None = None, create: bool = True) -> Path:
@@ -118,6 +132,20 @@ def load_supervised_training_config(
         difficulty_weight=yaml_config.difficulty_weight,
         max_sample_weight=yaml_config.max_sample_weight,
         copy_training_data=yaml_config.copy_training_data,
+        num_workers=yaml_config.num_workers,
+        persistent_workers=yaml_config.persistent_workers,
+        prefetch_factor=yaml_config.prefetch_factor,
+        pin_memory=yaml_config.pin_memory,
+        drop_last=yaml_config.drop_last,
+        encode_on_device=yaml_config.encode_on_device,
+        compute_train_accuracy=yaml_config.compute_train_accuracy,
+        validation_interval=yaml_config.validation_interval,
+        validation_max_samples=yaml_config.validation_max_samples,
+        amp=yaml_config.amp,
+        allow_tf32=yaml_config.allow_tf32,
+        torch_compile=yaml_config.torch_compile,
+        profile=yaml_config.profile,
+        profile_batches=yaml_config.profile_batches,
     )
     printable = asdict(yaml_config)
     printable["resolved_out_dir"] = str(out_dir)

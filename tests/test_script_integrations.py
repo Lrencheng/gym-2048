@@ -93,12 +93,16 @@ def test_supervised_default_config_loads_without_creating_root(tmp_path, monkeyp
     )
 
     assert config.data_path == "data/expectimax_d2_sampled_1000eps.npz"
-    assert config.epochs == 10
+    assert config.epochs == 40
     assert config.batch_size == 2048
     assert config.learning_rate == 0.001
     assert config.weight_decay == 0.0001
     assert config.temperature == 1.0
     assert config.device == "cuda"
+    assert config.num_workers == 4
+    assert config.encode_on_device is True
+    assert config.validation_max_samples == 100000
+    assert config.amp is True
     resolved = Path(printable["resolved_out_dir"])
     assert resolved.parts[-3:-1] == ("models", "supervise")
     assert resolved.name.startswith("train")

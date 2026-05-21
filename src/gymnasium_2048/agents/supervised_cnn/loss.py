@@ -19,7 +19,9 @@ def masked_soft_cross_entropy(
     mask = legal_mask.bool()
     valid = mask.any(dim=-1)
 
-    masked_logits = logits / temperature
+    # AMP may produce float16 logits; do the masked softmax math in float32 so
+    # the illegal-action sentinel stays representable and the loss remains stable.
+    masked_logits = logits.float() / temperature
     masked_logits = masked_logits.masked_fill(~mask, -1.0e9)
     log_probs = F.log_softmax(masked_logits, dim=-1)
 

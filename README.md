@@ -111,6 +111,9 @@ python scripts/generate_expectimax_data.py --episodes 1000 --depth 2 --chance-sa
 
 #训练学生网络（参数见 src/gymnasium_2048/agents/supervised_cnn/configs/train.yaml）
 python scripts/train.py --agent supervised_cnn
+
+#评估学生网络（参数见 src/gymnasium_2048/agents/supervised_cnn/configs/evaluate.yaml）
+python scripts/evaluate.py --agent supervised_cnn
 ```
 ## 依赖
 

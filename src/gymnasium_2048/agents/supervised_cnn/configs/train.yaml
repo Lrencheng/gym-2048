@@ -20,3 +20,20 @@ late_game_weight: 0.2
 difficulty_weight: 0.2
 max_sample_weight: 3.0
 copy_training_data: true
+
+num_workers: 4
+persistent_workers: true
+prefetch_factor: 4
+pin_memory: true
+drop_last: false
+
+encode_on_device: true
+compute_train_accuracy: true
+validation_interval: 1
+validation_max_samples: 100000
+
+amp: true
+allow_tf32: true
+torch_compile: false
+profile: true
+profile_batches: 50
