@@ -40,6 +40,9 @@ src/gymnasium_2048/
 # 安装依赖
 pip install -e .
 
+# 执行脚本
+# 注意一下脚本默认是在linux环境下，如果是在windows环境下需要将“/”统一修改为“\”
+
 # 运行启发式策略评估
 python scripts/evaluate.py --algo heuristic -n 1000 -o figures/heuristic_stats.png
 
@@ -47,14 +50,14 @@ python scripts/evaluate.py --algo heuristic -n 1000 -o figures/heuristic_stats.p
 python scripts/enjoy.py --algo heuristic -n 5
 
 #  遗传算法调参
-python -m gymnasium_2048.agents.evolution.run_evolution --generations 20 --population-size 20 --episodes 50 --seed 42 --out-dir models\evolution_large
+python -m gymnasium_2048.agents.evolution.run_evolution --generations 20 --population-size 20 --episodes 50 --seed 42 --out-dir models/evolution_large
 
 # Expertimax教师数据生成
 ## 稳健指令
-python scripts\generate_expectimax_data.py --episodes 1000 --depth 2 --chance-samples 6 --workers 4 --out data\expectimax_d2_sampled_1000eps.npz --seed 42
+python scripts/generate_expectimax_data.py --episodes 1000 --depth 2 --chance-samples 6 --workers 4 --out data/expectimax_d2_sampled_1000eps.npz --seed 42
 
 #CPU核心充足
-python scripts\generate_expectimax_data.py --episodes 1000 --depth 2 --chance-samples 6 --workers 8 --out data\expectimax_d2_sampled_1000eps_w8.npz --seed 42
+python scripts/generate_expectimax_data.py --episodes 1000 --depth 2 --chance-samples 6 --workers 8 --out data/expectimax_d2_sampled_1000eps_w8.npz --seed 42
 ```
 ## 依赖
 
