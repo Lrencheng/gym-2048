@@ -33,6 +33,7 @@ training = [
     "matplotlib==3.10.7",
     "moviepy==2.2.1",
     "pandas==2.3.3",
+    "PyYAML>=6.0",
     "torch>=2.0",
     "tqdm==4.67.1",
 ]
@@ -41,6 +42,12 @@ quality = ["black[d]", "isort", "pylint"]
 
 [project.urls]
 Repository = "https://github.com/Quentin18/gymnasium-2048"
+
+[tool.setuptools.package-data]
+"gymnasium_2048.agents.expectimax" = ["configs/*.yaml"]
+"gymnasium_2048.agents.heuristic" = ["configs/*.yaml"]
+"gymnasium_2048.agents.ntuple" = ["configs/*.yaml"]
+"gymnasium_2048.agents.supervised_cnn" = ["configs/*.yaml"]
 
 [tool.black]
 line-length = 88

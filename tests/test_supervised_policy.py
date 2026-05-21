@@ -23,7 +23,7 @@ def test_supervised_policy_loads_and_predicts_legal_action(tmp_path):
         progress=False,
     )
     save_expectimax_dataset(dataset, data_path)
-    train_supervised_cnn(
+    result = train_supervised_cnn(
         SupervisedTrainingConfig(
             data_path=str(data_path),
             out_dir=str(out_dir),
@@ -34,7 +34,7 @@ def test_supervised_policy_loads_and_predicts_legal_action(tmp_path):
         )
     )
 
-    policy = SupervisedCNNPolicy.load(out_dir / "best.pt")
+    policy = SupervisedCNNPolicy.load(result["best_checkpoint"])
     board = np.array(
         [
             [1, 1, 0, 0],

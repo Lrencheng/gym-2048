@@ -33,9 +33,17 @@ def test_supervised_train_smoke(tmp_path):
         )
     )
 
-    assert (out_dir / "best.pt").exists()
-    assert (out_dir / "last.pt").exists()
+    assert (out_dir / "checkpoints" / "best.pt").exists()
+    assert (out_dir / "checkpoints" / "last.pt").exists()
+    assert (out_dir / "tables" / "history.csv").exists()
+    assert (out_dir / "plots" / "training_curves.png").exists()
+    assert (out_dir / "tables" / "dataset_split_summary.csv").exists()
+    assert (out_dir / "plots" / "dataset_analysis.png").exists()
+    assert (out_dir / "data" / "teacher_data.npz").exists()
+    assert (out_dir / "data" / "train_indices.npy").exists()
+    assert (out_dir / "data" / "validation_indices.npy").exists()
     assert result["best_validation_loss"] >= 0.0
+    assert result["output_dir"] == str(out_dir)
 
 
 def test_resolve_device_auto_returns_valid_torch_device():

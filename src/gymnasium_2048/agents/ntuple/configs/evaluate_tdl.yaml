@@ -1,0 +1,13 @@
+agent: tdl
+env_id: gymnasium_2048:gymnasium_2048/TwentyFortyEight-v0
+trained_agent: models/best_n_tuple_network_policy.zip
+checkpoint: null
+episodes: 1000
+seed: 42
+title: TDL Evaluation
+output_path: null
+plot: false
+depth: 2
+chance_samples: null
+full_chance_empty_threshold: 6
+device: cpu

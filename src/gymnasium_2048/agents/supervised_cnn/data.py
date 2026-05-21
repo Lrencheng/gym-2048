@@ -71,11 +71,16 @@ class ExpectimaxDataset(Dataset):
         self.boards = np.asarray(dataset["boards"], dtype=np.uint8)
         self.legal_masks = np.asarray(dataset["legal_masks"], dtype=bool)
         self.action_probs = np.asarray(dataset["action_probs"], dtype=np.float32)
+        self.actions = np.asarray(dataset["actions"], dtype=np.int64)
+        self.final_scores = np.asarray(dataset["final_scores"], dtype=np.int64)
+        self.final_max_tiles = np.asarray(dataset["final_max_tiles"], dtype=np.int64)
+        self.empty_counts = np.asarray(dataset["empty_counts"], dtype=np.int64)
+        self.steps = np.asarray(dataset["steps"], dtype=np.int64)
         self.weights = compute_sample_weights(
-            final_scores=np.asarray(dataset["final_scores"]),
-            final_max_tiles=np.asarray(dataset["final_max_tiles"]),
-            steps=np.asarray(dataset["steps"]),
-            empty_counts=np.asarray(dataset["empty_counts"]),
+            final_scores=self.final_scores,
+            final_max_tiles=self.final_max_tiles,
+            steps=self.steps,
+            empty_counts=self.empty_counts,
             config=weight_config,
         )
         self.num_channels = num_channels
@@ -88,13 +93,17 @@ class ExpectimaxDataset(Dataset):
     def __len__(self) -> int:
         return int(len(self.indices))
 
-    def __getitem__(self, index: int) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    def __getitem__(
+        self,
+        index: int,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         data_index = int(self.indices[index])
         encoded = encode_board(self.boards[data_index], num_channels=self.num_channels)
         return (
             torch.from_numpy(encoded),
             torch.from_numpy(self.legal_masks[data_index].astype(np.float32)),
             torch.from_numpy(self.action_probs[data_index]),
+            torch.tensor(self.actions[data_index], dtype=torch.long),
             torch.tensor(self.weights[data_index], dtype=torch.float32),
         )
 
