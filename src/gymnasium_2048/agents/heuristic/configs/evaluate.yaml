@@ -13,10 +13,10 @@ full_chance_empty_threshold: 6
 device: cpu
 reward_transform: log2p1
 weights:
-  empty_cells: 12.271004
-  smoothness: 0.859501
-  monotonicity: 2.891370
-  corner_max: 3.555273
-  merge_potential: 2.732829
-  edge_bonus: 0.098447
-  reward: 1.021244
+  empty_cells: 6.094234
+  smoothness: 0.750942
+  monotonicity: 1.005898
+  corner_max: 3.075593
+  merge_potential: 4.922587
+  edge_bonus: 0.069035
+  reward: 1.387334

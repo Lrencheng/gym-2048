@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from dataclasses import dataclass
 from typing import Any
 
@@ -25,6 +26,25 @@ CandidateEvaluator = Callable[[HeuristicWeights, Sequence[int], str], Evaluation
 ProgressBar = Any | None
 
 
+def _evaluate_candidate_worker(
+    candidate_index: int,
+    vector: np.ndarray,
+    episode_seeds: Sequence[int],
+    env_id: str,
+    spec: AgentSpec,
+) -> tuple[int, EvaluationResult]:
+    weights = spec.vector_to_weights(vector)
+    return (
+        candidate_index,
+        evaluate_weights(
+            weights,
+            episode_seeds,
+            env_id,
+            spec=spec,
+        ),
+    )
+
+
 @dataclass(frozen=True)
 class GenerationRecord:
     generation: int
@@ -45,6 +65,8 @@ class EvolutionResult:
     agent: str = "heuristic"
     policy_config: dict[str, Any] | None = None
     train_config: dict[str, Any] | None = None
+    final_population: np.ndarray | None = None
+    final_evaluations: list[EvaluationResult] | None = None
 
 
 class GeneticOptimizer:
@@ -54,6 +76,7 @@ class GeneticOptimizer:
         evaluator: CandidateEvaluator | None = None,
         spec: AgentSpec | None = None,
         train_config: dict[str, Any] | None = None,
+        initial_population: np.ndarray | None = None,
     ) -> None:
         config.validate()
         self.config = config
@@ -61,6 +84,11 @@ class GeneticOptimizer:
         self.evaluator = evaluator
         self.rng = np.random.default_rng(config.seed)
         self.train_config = dict(train_config or {})
+        self.initial_population = (
+            self._validate_initial_population(initial_population)
+            if initial_population is not None
+            else None
+        )
         self.episode_seeds = make_episode_seeds(
             seed=config.seed + 1,
             episodes=config.episodes_per_candidate,
@@ -80,11 +108,33 @@ class GeneticOptimizer:
             policy_config=policy_config,
         )
 
+    def _validate_initial_population(self, population: np.ndarray) -> np.ndarray:
+        initial = np.asarray(population, dtype=np.float64)
+        expected_shape = (
+            self.config.population_size,
+            len(self.spec.parameter_names),
+        )
+        if initial.shape != expected_shape:
+            raise ValueError(
+                "initial_population must have shape "
+                f"{expected_shape}, got {initial.shape}"
+            )
+        return np.array(
+            [self.spec.clip_vector(vector) for vector in initial],
+            dtype=np.float64,
+        )
+
     def run(self, verbose: bool = False, progress: bool = False) -> EvolutionResult:
-        population = self._make_initial_population()
+        population = (
+            self.initial_population.copy()
+            if self.initial_population is not None
+            else self._make_initial_population()
+        )
         history = []
         best_vector = population[0].copy()
         best_evaluation: EvaluationResult | None = None
+        final_population: np.ndarray | None = None
+        final_evaluations: list[EvaluationResult] | None = None
         progress_bar = self._make_progress_bar() if progress else None
 
         try:
@@ -94,6 +144,8 @@ class GeneticOptimizer:
                     generation=generation,
                     progress_bar=progress_bar,
                 )
+                final_population = population.copy()
+                final_evaluations = list(evaluations)
                 fitnesses = np.array(
                     [evaluation.fitness for evaluation in evaluations],
                     dtype=np.float64,
@@ -123,12 +175,15 @@ class GeneticOptimizer:
                 if verbose:
                     self._print_generation(record, progress_bar)
 
-                population = self._make_next_population(population, fitnesses)
+                if generation + 1 < self.config.generations:
+                    population = self._make_next_population(population, fitnesses)
         finally:
             if progress_bar is not None:
                 progress_bar.close()
 
         assert best_evaluation is not None
+        assert final_population is not None
+        assert final_evaluations is not None
         return EvolutionResult(
             best_weights=self.spec.vector_to_weights(best_vector),
             best_evaluation=best_evaluation,
@@ -137,6 +192,8 @@ class GeneticOptimizer:
             agent=self.spec.agent,
             policy_config=dict(self.spec.policy_config),
             train_config=dict(self.train_config),
+            final_population=final_population,
+            final_evaluations=final_evaluations,
         )
 
     def _make_progress_bar(self) -> tqdm:
@@ -162,6 +219,13 @@ class GeneticOptimizer:
         generation: int,
         progress_bar: ProgressBar = None,
     ) -> list[EvaluationResult]:
+        if self.config.workers > 1 and self.evaluator is None:
+            return self._evaluate_population_parallel(
+                population=population,
+                generation=generation,
+                progress_bar=progress_bar,
+            )
+
         evaluations = []
 
         for candidate_index, vector in enumerate(population):
@@ -188,6 +252,40 @@ class GeneticOptimizer:
             self._advance_candidate_progress(progress_bar, evaluation)
 
         return evaluations
+
+    def _evaluate_population_parallel(
+        self,
+        population: np.ndarray,
+        generation: int,
+        progress_bar: ProgressBar = None,
+    ) -> list[EvaluationResult]:
+        worker_count = min(self.config.workers, len(population))
+        evaluations: list[EvaluationResult | None] = [None] * len(population)
+        self._update_parallel_progress(
+            progress_bar=progress_bar,
+            generation=generation,
+            worker_count=worker_count,
+        )
+
+        with ProcessPoolExecutor(max_workers=worker_count) as executor:
+            futures = [
+                executor.submit(
+                    _evaluate_candidate_worker,
+                    candidate_index,
+                    vector.copy(),
+                    self.episode_seeds,
+                    self.config.env_id,
+                    self.spec,
+                )
+                for candidate_index, vector in enumerate(population)
+            ]
+
+            for future in as_completed(futures):
+                candidate_index, evaluation = future.result()
+                evaluations[candidate_index] = evaluation
+                self._advance_candidate_progress(progress_bar, evaluation)
+
+        return [evaluation for evaluation in evaluations if evaluation is not None]
 
     def _make_next_population(
         self,
@@ -247,6 +345,22 @@ class GeneticOptimizer:
             (
                 f"Generation {generation + 1}/{self.config.generations} "
                 f"candidate {candidate_index + 1}/{self.config.population_size}"
+            )
+        )
+
+    def _update_parallel_progress(
+        self,
+        progress_bar: ProgressBar,
+        generation: int,
+        worker_count: int,
+    ) -> None:
+        if progress_bar is None:
+            return
+
+        progress_bar.set_description(
+            (
+                f"Generation {generation + 1}/{self.config.generations} "
+                f"parallel workers {worker_count}"
             )
         )
 

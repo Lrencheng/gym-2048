@@ -7,6 +7,7 @@ out_dir: models/evolution/heuristic
 population_size: 8
 generations: 5
 episodes_per_candidate: 5
+workers: 1
 elite_size: 2
 tournament_size: 3
 crossover_rate: 0.8

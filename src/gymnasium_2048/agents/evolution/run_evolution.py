@@ -44,6 +44,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--population-size", type=int, default=None)
     parser.add_argument("--generations", type=int, default=None)
     parser.add_argument("--episodes", type=int, default=None)
+    parser.add_argument("--workers", type=int, default=None)
     parser.add_argument("--elite-size", type=int, default=None)
     parser.add_argument("--tournament-size", type=int, default=None)
     parser.add_argument("--crossover-rate", type=float, default=None)
@@ -75,6 +76,7 @@ def make_config(
         "population_size": args.population_size,
         "generations": args.generations,
         "episodes_per_candidate": args.episodes,
+        "workers": args.workers,
         "elite_size": args.elite_size,
         "tournament_size": args.tournament_size,
         "crossover_rate": args.crossover_rate,
@@ -176,6 +178,7 @@ def main() -> None:
         f"population_size={config.population_size}, "
         f"episodes_per_candidate={config.episodes_per_candidate}, "
         f"total_candidates={config.generations * config.population_size}, "
+        f"workers={config.workers}, "
         f"seed={config.seed}",
         flush=True,
     )

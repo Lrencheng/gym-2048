@@ -20,6 +20,13 @@ from gymnasium_2048.agents.evolution import (
 )
 from gymnasium_2048.agents.expectimax import ExpectimaxPolicy
 from gymnasium_2048.agents.evolution.run_evolution import make_config as make_cli_config
+from gymnasium_2048.agents.evolution.run_expectimax_staged import (
+    FinalConfig,
+    StageConfig,
+    run_staged_expectimax,
+    seed_population_from_elites,
+    select_top_vectors,
+)
 from gymnasium_2048.agents.heuristic import HeuristicPolicy
 
 
@@ -87,11 +94,54 @@ class EvolutionTest(unittest.TestCase):
 
         self.assertEqual(len(result.history), 1)
 
+    def test_initial_population_is_used_and_returned(self):
+        config = EvolutionConfig(
+            seed=7,
+            population_size=2,
+            generations=1,
+            episodes_per_candidate=1,
+            elite_size=1,
+            tournament_size=1,
+        )
+        initial_population = np.array(
+            [
+                [12.0, 1.0, 2.0, 4.0, 6.0, 0.02, 1.5],
+                [10.0, 1.2, 2.5, 3.5, 5.0, 0.05, 1.0],
+            ],
+            dtype=np.float64,
+        )
+
+        result = GeneticOptimizer(
+            config=config,
+            evaluator=fake_evaluator,
+            initial_population=initial_population,
+        ).run()
+
+        np.testing.assert_allclose(result.final_population, initial_population)
+        self.assertEqual(len(result.final_evaluations), config.population_size)
+
+    def test_initial_population_shape_is_validated(self):
+        config = EvolutionConfig(
+            population_size=2,
+            generations=1,
+            episodes_per_candidate=1,
+            elite_size=1,
+            tournament_size=1,
+        )
+
+        with pytest.raises(ValueError):
+            GeneticOptimizer(
+                config=config,
+                evaluator=fake_evaluator,
+                initial_population=np.zeros((1, 7), dtype=np.float64),
+            )
+
     def test_agent_specs_load_from_yaml_and_construct_policies(self):
         heuristic_config, heuristic_policy_config, heuristic_bounds = (
             load_evolution_config("heuristic")
         )
         self.assertEqual(heuristic_config.out_dir, "models/evolution/heuristic")
+        self.assertEqual(heuristic_config.workers, 1)
         heuristic_spec = make_agent_spec(
             heuristic_config.agent,
             heuristic_bounds,
@@ -105,6 +155,7 @@ class EvolutionTest(unittest.TestCase):
             load_evolution_config("expectimax")
         )
         self.assertEqual(expectimax_config.out_dir, "models/evolution/expectimax")
+        self.assertEqual(expectimax_config.workers, 4)
         expectimax_spec = make_agent_spec(
             expectimax_config.agent,
             expectimax_bounds,
@@ -160,6 +211,12 @@ class EvolutionTest(unittest.TestCase):
         with pytest.raises(ValueError):
             config.validate()
 
+    def test_evolution_config_rejects_invalid_workers(self):
+        config = EvolutionConfig(workers=0)
+
+        with pytest.raises(ValueError):
+            config.validate()
+
     def test_cli_out_dir_overrides_train_yaml(self):
         args = SimpleNamespace(
             agent="heuristic",
@@ -175,11 +232,13 @@ class EvolutionTest(unittest.TestCase):
             mutation_rate=None,
             mutation_scale=None,
             out_dir="models/evolution/custom",
+            workers=3,
         )
 
         config, _policy_config, _bounds = make_cli_config(args)
 
         self.assertEqual(config.out_dir, "models/evolution/custom")
+        self.assertEqual(config.workers, 3)
 
     def test_small_real_optimization_runs_for_each_agent(self):
         for agent in ("heuristic", "expectimax"):
@@ -201,6 +260,116 @@ class EvolutionTest(unittest.TestCase):
 
             self.assertEqual(len(result.history), 1)
             self.assertEqual(result.agent, agent)
+
+    def test_parallel_real_optimization_runs(self):
+        _config, policy_config, bounds = load_evolution_config("heuristic")
+        config = EvolutionConfig(
+            agent="heuristic",
+            population_size=2,
+            generations=1,
+            episodes_per_candidate=1,
+            elite_size=1,
+            tournament_size=1,
+            workers=2,
+            seed=13,
+        )
+        spec = make_agent_spec("heuristic", bounds, policy_config)
+
+        result = GeneticOptimizer(config=config, spec=spec).run()
+
+        self.assertEqual(len(result.history), 1)
+        self.assertEqual(result.agent, "heuristic")
+
+    def test_select_top_vectors_orders_by_fitness(self):
+        population = np.array(
+            [
+                [1.0, 0.0],
+                [2.0, 0.0],
+                [3.0, 0.0],
+            ],
+            dtype=np.float64,
+        )
+        evaluations = [
+            EvaluationResult(fitness=1.0, mean_score=1.0, max_tile=2, mean_steps=1.0),
+            EvaluationResult(fitness=3.0, mean_score=3.0, max_tile=4, mean_steps=1.0),
+            EvaluationResult(fitness=2.0, mean_score=2.0, max_tile=8, mean_steps=1.0),
+        ]
+
+        selected = select_top_vectors(population, evaluations, top_k=2)
+
+        np.testing.assert_allclose(selected, population[[1, 2]])
+
+    def test_seed_population_from_elites_keeps_elites_and_clips_mutations(self):
+        _config, policy_config, bounds = load_evolution_config("heuristic")
+        spec = make_agent_spec("heuristic", bounds, policy_config)
+        elites = np.array(
+            [
+                spec.parameter_bounds[:, 0],
+                spec.parameter_bounds[:, 1],
+            ],
+            dtype=np.float64,
+        )
+
+        population = seed_population_from_elites(
+            elites=elites,
+            population_size=4,
+            mutation_scale=0.5,
+            spec=spec,
+            rng=np.random.default_rng(5),
+        )
+
+        np.testing.assert_allclose(population[:2], elites)
+        self.assertTrue(np.all(population >= spec.parameter_bounds[:, 0]))
+        self.assertTrue(np.all(population <= spec.parameter_bounds[:, 1]))
+
+
+def test_staged_expectimax_smoke_generates_artifacts(tmp_path):
+    result = run_staged_expectimax(
+        out_dir=tmp_path / "staged",
+        seed=17,
+        workers=1,
+        progress=False,
+        stages=(
+            StageConfig(
+                name="stage1",
+                depth=1,
+                chance_samples=1,
+                episodes=1,
+                population_size=2,
+                generations=1,
+                elite_size=1,
+                tournament_size=1,
+                mutation_scale=0.05,
+                seed_elite_count=1,
+            ),
+            StageConfig(
+                name="stage2",
+                depth=1,
+                chance_samples=1,
+                episodes=1,
+                population_size=2,
+                generations=1,
+                elite_size=1,
+                tournament_size=1,
+                mutation_scale=0.05,
+                seed_elite_count=1,
+            ),
+        ),
+        final_config=FinalConfig(
+            depth=1,
+            chance_samples=1,
+            episodes=1,
+            top_k=1,
+        ),
+    )
+
+    output_dir = tmp_path / "staged"
+    assert result["out_dir"] == str(output_dir)
+    assert (output_dir / "stage1" / "parameter_evolution.png").exists()
+    assert (output_dir / "stage2" / "parameter_evolution.png").exists()
+    assert (output_dir / "final" / "final_ranking.csv").exists()
+    assert (output_dir / "final" / "best_expectimax_weights.json").exists()
+    assert (output_dir / "staged_expectimax_summary.json").exists()
 
 
 if __name__ == "__main__":

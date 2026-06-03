@@ -50,6 +50,7 @@ class EvolutionConfig:
     population_size: int = 8
     generations: int = 5
     episodes_per_candidate: int = 5
+    workers: int = 1
     elite_size: int = 2
     tournament_size: int = 3
     crossover_rate: float = 0.8
@@ -68,6 +69,8 @@ class EvolutionConfig:
             raise ValueError("generations must be at least 1")
         if self.episodes_per_candidate < 1:
             raise ValueError("episodes_per_candidate must be at least 1")
+        if self.workers < 1:
+            raise ValueError("workers must be at least 1")
         if not 1 <= self.elite_size < self.population_size:
             raise ValueError("elite_size must be in [1, population_size)")
         if not 1 <= self.tournament_size <= self.population_size:
