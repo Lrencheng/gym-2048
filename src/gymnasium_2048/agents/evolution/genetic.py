@@ -9,17 +9,16 @@ from tqdm import tqdm
 
 from gymnasium_2048.agents.evolution.config import (
     PARAMETER_BOUNDS,
+    PARAMETER_NAMES,
     EvolutionConfig,
+    load_evolution_config,
 )
 from gymnasium_2048.agents.evolution.evaluation import (
     EvaluationResult,
     evaluate_weights,
     make_episode_seeds,
 )
-from gymnasium_2048.agents.evolution.parameters import (
-    clip_vector,
-    vector_to_weights,
-)
+from gymnasium_2048.agents.evolution.specs import AgentSpec, make_agent_spec
 from gymnasium_2048.agents.heuristic import HeuristicWeights
 
 CandidateEvaluator = Callable[[HeuristicWeights, Sequence[int], str], EvaluationResult]
@@ -43,21 +42,42 @@ class EvolutionResult:
     best_evaluation: EvaluationResult
     best_vector: np.ndarray
     history: list[GenerationRecord]
+    agent: str = "heuristic"
+    policy_config: dict[str, Any] | None = None
+    train_config: dict[str, Any] | None = None
 
 
 class GeneticOptimizer:
     def __init__(
         self,
         config: EvolutionConfig,
-        evaluator: CandidateEvaluator = evaluate_weights,
+        evaluator: CandidateEvaluator | None = None,
+        spec: AgentSpec | None = None,
+        train_config: dict[str, Any] | None = None,
     ) -> None:
         config.validate()
         self.config = config
+        self.spec = spec or self._make_default_spec(config.agent)
         self.evaluator = evaluator
         self.rng = np.random.default_rng(config.seed)
+        self.train_config = dict(train_config or {})
         self.episode_seeds = make_episode_seeds(
             seed=config.seed + 1,
             episodes=config.episodes_per_candidate,
+        )
+
+    @staticmethod
+    def _make_default_spec(agent: str) -> AgentSpec:
+        if agent == "heuristic":
+            return make_agent_spec(
+                agent="heuristic",
+                parameter_bounds=dict(zip(PARAMETER_NAMES, PARAMETER_BOUNDS.tolist())),
+            )
+        _config, policy_config, parameter_bounds = load_evolution_config(agent)
+        return make_agent_spec(
+            agent=agent,
+            parameter_bounds=parameter_bounds,
+            policy_config=policy_config,
         )
 
     def run(self, verbose: bool = False, progress: bool = False) -> EvolutionResult:
@@ -110,10 +130,13 @@ class GeneticOptimizer:
 
         assert best_evaluation is not None
         return EvolutionResult(
-            best_weights=vector_to_weights(best_vector),
+            best_weights=self.spec.vector_to_weights(best_vector),
             best_evaluation=best_evaluation,
             best_vector=best_vector,
             history=history,
+            agent=self.spec.agent,
+            policy_config=dict(self.spec.policy_config),
+            train_config=dict(self.train_config),
         )
 
     def _make_progress_bar(self) -> tqdm:
@@ -125,12 +148,12 @@ class GeneticOptimizer:
         )
 
     def _make_initial_population(self) -> np.ndarray:
-        lower = PARAMETER_BOUNDS[:, 0]
-        upper = PARAMETER_BOUNDS[:, 1]
+        lower = self.spec.parameter_bounds[:, 0]
+        upper = self.spec.parameter_bounds[:, 1]
         return self.rng.uniform(
             low=lower,
             high=upper,
-            size=(self.config.population_size, len(PARAMETER_BOUNDS)),
+            size=(self.config.population_size, len(self.spec.parameter_bounds)),
         )
 
     def _evaluate_population(
@@ -147,11 +170,20 @@ class GeneticOptimizer:
                 generation=generation,
                 candidate_index=candidate_index,
             )
-            evaluation = self.evaluator(
-                vector_to_weights(vector),
-                self.episode_seeds,
-                self.config.env_id,
-            )
+            weights = self.spec.vector_to_weights(vector)
+            if self.evaluator is None:
+                evaluation = evaluate_weights(
+                    weights,
+                    self.episode_seeds,
+                    self.config.env_id,
+                    spec=self.spec,
+                )
+            else:
+                evaluation = self.evaluator(
+                    weights,
+                    self.episode_seeds,
+                    self.config.env_id,
+                )
             evaluations.append(evaluation)
             self._advance_candidate_progress(progress_bar, evaluation)
 
@@ -193,14 +225,14 @@ class GeneticOptimizer:
 
         alpha = self.rng.random(len(parent_a))
         child = alpha * parent_a + (1.0 - alpha) * parent_b
-        return clip_vector(child)
+        return self.spec.clip_vector(child)
 
     def _mutate(self, vector: np.ndarray) -> np.ndarray:
-        span = PARAMETER_BOUNDS[:, 1] - PARAMETER_BOUNDS[:, 0]
+        span = self.spec.parameter_bounds[:, 1] - self.spec.parameter_bounds[:, 0]
         mutation_mask = self.rng.random(len(vector)) < self.config.mutation_rate
         noise = self.rng.normal(loc=0.0, scale=self.config.mutation_scale * span)
         mutated = vector + mutation_mask * noise
-        return clip_vector(mutated)
+        return self.spec.clip_vector(mutated)
 
     def _update_candidate_progress(
         self,

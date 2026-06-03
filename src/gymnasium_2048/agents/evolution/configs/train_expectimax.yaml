@@ -1,0 +1,24 @@
+agent: expectimax
+policy_config: ../../expectimax/configs/evaluate.yaml
+reward_transform: log2p1
+
+seed: 42
+out_dir: models/evolution/expectimax
+population_size: 8
+generations: 5
+episodes_per_candidate: 5
+elite_size: 2
+tournament_size: 3
+crossover_rate: 0.8
+mutation_rate: 0.25
+mutation_scale: 0.15
+
+parameter_bounds:
+  empty_cells: [0.5, 8.0]
+  smoothness: [0.05, 1.5]
+  monotonicity: [0.2, 4.0]
+  merge_potential: [0.2, 4.0]
+  corner_max: [0.2, 4.0]
+  max_tile: [0.0, 2.0]
+  snake: [0.0, 3.0]
+  reward: [0.2, 3.0]

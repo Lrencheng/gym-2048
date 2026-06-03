@@ -9,6 +9,7 @@ from gymnasium_2048.agents.heuristic import (
     merge_potential,
     monotonicity,
     smoothness,
+    transform_reward,
 )
 from gymnasium_2048.envs import TwentyFortyEightEnv
 
@@ -31,6 +32,12 @@ def test_heuristic_features():
     assert merge_potential(board) == 4
     assert edge_bonus(board) == 42
     assert evaluate_board(board, reward=8) > 0
+
+
+def test_reward_transform_modes():
+    assert transform_reward(8, "raw") == 8
+    assert np.isclose(transform_reward(8, "log2p1"), np.log2(9))
+    assert transform_reward(8, "none") == 0
 
 
 def test_heuristic_policy_predicts_legal_best_action():

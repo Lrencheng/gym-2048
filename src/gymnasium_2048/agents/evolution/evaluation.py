@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Any
 
 import gymnasium as gym
 import numpy as np
@@ -23,11 +24,12 @@ def make_episode_seeds(seed: int, episodes: int) -> list[int]:
 
 
 def evaluate_weights(
-    weights: HeuristicWeights,
+    weights: HeuristicWeights | Any,
     episode_seeds: Sequence[int],
     env_id: str = "gymnasium_2048:gymnasium_2048/TwentyFortyEight-v0",
+    spec: Any | None = None,
 ) -> EvaluationResult:
-    policy = HeuristicPolicy(weights=weights)
+    policy = spec.make_policy(weights) if spec is not None else HeuristicPolicy(weights=weights)
     scores = []
     max_tiles = []
     steps = []
@@ -57,4 +59,3 @@ def evaluate_weights(
         max_tile=int(np.max(max_tiles)),
         mean_steps=float(np.mean(steps)),
     )
-

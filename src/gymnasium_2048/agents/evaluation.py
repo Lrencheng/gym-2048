@@ -19,8 +19,11 @@ from gymnasium_2048.agents.config import (
     load_yaml_mapping,
     validate_config_agent,
 )
-from gymnasium_2048.agents.expectimax import ExpectimaxPolicy
-from gymnasium_2048.agents.heuristic import HeuristicPolicy
+from gymnasium_2048.agents.expectimax import (
+    ExpectimaxHeuristicWeights,
+    ExpectimaxPolicy,
+)
+from gymnasium_2048.agents.heuristic import HeuristicPolicy, HeuristicWeights
 from gymnasium_2048.agents.ntuple.training import make_ntuple_policy
 from gymnasium_2048.agents.supervised_cnn import SupervisedCNNPolicy
 
@@ -48,6 +51,20 @@ class EvaluationConfig:
     chance_samples: int | None = None
     full_chance_empty_threshold: int = 6
     device: str = "cpu"
+    weights: dict[str, float] | None = None
+    reward_transform: str | None = None
+
+
+def _make_heuristic_weights(data: dict[str, float] | None) -> HeuristicWeights:
+    return HeuristicWeights(**data) if data is not None else HeuristicWeights()
+
+
+def _make_expectimax_weights(data: dict[str, float] | None) -> ExpectimaxHeuristicWeights:
+    return (
+        ExpectimaxHeuristicWeights(**data)
+        if data is not None
+        else ExpectimaxHeuristicWeights()
+    )
 
 
 def make_env(env_id: str) -> gym.Env:
@@ -59,10 +76,15 @@ def make_policy(config: EvaluationConfig) -> PredictPolicy | None:
     agent = config.agent
     model_path = config.checkpoint or config.trained_agent
     if agent == "heuristic":
-        return HeuristicPolicy()
+        return HeuristicPolicy(
+            weights=_make_heuristic_weights(config.weights),
+            reward_transform=config.reward_transform or "raw",
+        )
     if agent == "expectimax":
         return ExpectimaxPolicy(
             depth=config.depth,
+            weights=_make_expectimax_weights(config.weights),
+            reward_transform=config.reward_transform or "log2p1",
             seed=config.seed,
             chance_samples=config.chance_samples,
             full_chance_empty_threshold=config.full_chance_empty_threshold,

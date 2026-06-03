@@ -1,0 +1,23 @@
+agent: heuristic
+policy_config: ../../heuristic/configs/evaluate.yaml
+reward_transform: log2p1
+
+seed: 42
+out_dir: models/evolution/heuristic
+population_size: 8
+generations: 5
+episodes_per_candidate: 5
+elite_size: 2
+tournament_size: 3
+crossover_rate: 0.8
+mutation_rate: 0.25
+mutation_scale: 0.15
+
+parameter_bounds:
+  empty_cells: [5.0, 20.0]
+  smoothness: [0.5, 3.0]
+  monotonicity: [1.0, 5.0]
+  corner_max: [2.0, 5.0]
+  merge_potential: [2.0, 8.0]
+  edge_bonus: [0.01, 0.1]
+  reward: [0.5, 2.0]

@@ -1,123 +1,199 @@
-# 2048 智能体 — 人工智能概论课程大作业
+# 2048 智能体项目
 
-本项目基于 [Quentin18/gymnasium-2048](https://github.com/Quentin18/gymnasium-2048) 进行二次开发，在此致谢原作者的优秀工作。
+本项目基于 [Quentin18/gymnasium-2048](https://github.com/Quentin18/gymnasium-2048) 二次开发，用 2048 游戏环境对比和训练多种智能体策略，包括启发式搜索、Expectimax、遗传算法调参、监督学习蒸馏以及 N-Tuple 强化学习。
 
-## 项目背景
+## Python 环境
 
-北京理工大学 2026 年春学期《人工智能概论》课程大作业。
+本机项目环境为 Conda 环境 `learning`。运行脚本、测试和检查时请统一使用：
 
-项目以 2048 游戏为实验平台，综合运用多种人工智能算法实现游戏决策，涵盖启发式搜索、遗传算法、Expectimax 搜索、监督学习（知识蒸馏）以及强化学习等多种方法。
+```powershell
+D:\ANOCONDA\envs\learning\python.exe -m <module-or-tool>
+```
 
-## 任务目标
+如果该路径不可用，再使用：
 
-1. **启发式搜索 + 遗传算法调参** — 设计多维度的启发式评价函数，对棋盘的空格数、平滑度、单调性、合并潜力等特征进行加权评分，并使用遗传算法自动搜索最优权重组合。
+```powershell
+conda run -n learning python -m <module-or-tool>
+```
 
-2. **监督学习** — 使用当前最强的Expertimax算法生成教师数据，构建一个小型的CNN学生网络对教师数据进行蒸馏；全程数据集和训练过程支持高分数据加权，使用mask进行违规动作抑制。
+安装开发依赖：
 
-3. **强化学习** — 实现基于 N-Tuple Network 的强化学习算法（TD-Learning / Q-Learning），通过与环境的持续交互优化决策策略。
+```powershell
+D:\ANOCONDA\envs\learning\python.exe -m pip install -e .[training,testing]
+```
 
 ## 项目结构
 
-```
+```text
 gymnasium-2048/
-├── scripts/                          # 可执行脚本
-│   ├── play.py                       # 人工键盘游玩
-│   ├── random_policy.py              # 随机策略演示
-│   ├── train.py                      # N-Tuple 网络强化学习训练
-│   ├── enjoy.py                      # 加载模型观看游玩
-│   ├── evaluate.py                   # 评估策略并生成统计图
-│   ├── plot.py                       # 训练日志绘图
-│   └── generate_expectimax_data.py   # Expectimax 教师数据生成
-│
+├── scripts/                         # 命令行脚本入口
+│   ├── play.py                      # 人工键盘游玩
+│   ├── random_policy.py             # 随机策略演示
+│   ├── enjoy.py                     # 加载策略并可视化运行
+│   ├── evaluate.py                  # 按 YAML 评估智能体
+│   ├── train.py                     # 按 YAML 训练 N-Tuple / supervised_cnn
+│   └── generate_expectimax_data.py  # 生成 Expectimax 教师数据
 ├── src/gymnasium_2048/
-│   ├── __init__.py                   # 环境注册
-│   ├── envs/
-│   │   └── twenty_forty_eight.py     # 2048 游戏环境（基于 Gymnasium）
-│   ├── agents/
-│   │   ├── heuristic/                # 启发式搜索策略
-│   │   │   ├── features.py           # 评价函数库（空格数、平滑度、单调性等）
-│   │   │   └── policy.py             # 启发式策略类
-│   │   ├── evolution/                # 遗传算法调参
-│   │   │   ├── config.py             # 参数边界与进化配置
-│   │   │   ├── parameters.py         # 参数向量与权重的转换
-│   │   │   ├── evaluation.py         # 适应度评估
-│   │   │   ├── genetic.py            # 遗传算法核心（选择、交叉、变异）
-│   │   │   ├── plotting.py           # 进化过程可视化
-│   │   │   └── run_evolution.py      # 进化算法入口
-│   │   ├── expectimax/               # Expectimax 搜索（教师模型）
-│   │   │   ├── policy.py             # Expectimax 搜索策略
-│   │   │   ├── heuristic.py          # 搜索用启发式评价函数
-│   │   │   ├── board.py              # 棋盘工具函数
-│   │   │   ├── data.py               # 教师数据生成与加载
-│   │   │   └── fast_move.py          # 加速版棋盘移动
-│   │   ├── supervised_cnn/           # 监督学习（CNN 知识蒸馏）
-│   │   │   ├── data.py               # 数据集管理与采样
-│   │   │   ├── encoding.py           # 棋盘编码与动作掩码
-│   │   │   ├── model.py              # CNN 学生网络
-│   │   │   ├── loss.py               # 加权交叉熵损失
-│   │   │   ├── train.py              # 训练脚本
-│   │   │   └── policy.py             # 推理策略类
-│   │   └── ntuple/                   # N-Tuple Network 强化学习
-│   │       ├── network.py            # N-Tuple 网络（查表）
-│   │       ├── factory.py            # 特征提取（棋盘 → n-tuples）
-│   │       └── policy.py             # TD-Learning / Q-Learning 策略
-│   └── wrappers/                     # Gymnasium 环境包装器
-│       ├── illegal_reward.py
-│       ├── terminate_goal.py
-│       └── terminate_illegal.py
-│
-├── models/                           # 训练产出的模型与结果
-│   ├── evolution/                    # 遗传算法调参结果（小规模）
-│   └── evolution_large/              # 遗传算法调参结果（大规模）
-│
-├── figures/                          # 统计图表与可视化结果
-├── tests/                            # 单元测试
-│   ├── test_heuristic.py
-│   ├── test_evolution.py
-│   ├── test_expectimax_*.py
-│   ├── test_supervised_*.py
-│   ├── test_envs.py
-│   └── test_agents.py
-│
-├── HEURISTIC_GUIDE.md                # 启发式算法开发指南
-├── pyproject.toml                    # 项目元数据与依赖
-└── README.md                         # 本文件
+│   ├── envs/                        # Gymnasium 2048 环境
+│   ├── wrappers/                    # 环境包装器
+│   └── agents/
+│       ├── heuristic/               # 一步启发式策略与共享特征库
+│       ├── expectimax/              # Expectimax 搜索策略与教师数据生成
+│       ├── evolution/               # 遗传算法调参，支持 heuristic / expectimax
+│       ├── supervised_cnn/          # CNN 学生模型与蒸馏训练
+│       └── ntuple/                  # N-Tuple TD/Q-Learning
+├── tests/                           # 单元测试与集成冒烟测试
+├── models/                          # 训练产物
+├── data/                            # 数据集
+└── figures/                         # 评估图表
 ```
 
-## 快速开始
+## 常用命令
 
-```bash
-# 安装依赖
-pip install -e .
+以下命令默认在仓库根目录 `gymnasium-2048/` 下运行。
 
-# 执行脚本
-# 注意一下脚本默认是在linux环境下，如果是在windows环境下需要将“/”统一修改为“\”
+### 测试
 
-# 运行启发式策略评估（参数见 src/gymnasium_2048/agents/heuristic/configs/evaluate.yaml）
-python scripts/evaluate.py --agent heuristic
-
-# 观看启发式策略游玩
-python scripts/enjoy.py --algo heuristic -n 5
-
-#  遗传算法调参
-python -m gymnasium_2048.agents.evolution.run_evolution --generations 20 --population-size 20 --episodes 50 --seed 42 --out-dir models/evolution_large
-
-# Expertimax教师数据生成
-## 稳健指令
-python scripts/generate_expectimax_data.py --episodes 1000 --depth 2 --chance-samples 6 --workers 4 --out data/expectimax_d2_sampled_1000eps.npz --seed 42
-
-#CPU核心充足
-python scripts/generate_expectimax_data.py --episodes 1000 --depth 2 --chance-samples 6 --workers 8 --out data/expectimax_d2_sampled_1000eps_w8.npz --seed 42
-
-#训练学生网络（参数见 src/gymnasium_2048/agents/supervised_cnn/configs/train.yaml）
-python scripts/train.py --agent supervised_cnn
-
-#评估学生网络（参数见 src/gymnasium_2048/agents/supervised_cnn/configs/evaluate.yaml）
-python scripts/evaluate.py --agent supervised_cnn
+```powershell
+D:\ANOCONDA\envs\learning\python.exe -m pytest -q
 ```
+
+### 评估智能体
+
+配置文件位于 `src/gymnasium_2048/agents/<agent>/configs/evaluate.yaml`。
+
+```powershell
+# 评估 heuristic
+D:\ANOCONDA\envs\learning\python.exe -m scripts.evaluate --agent heuristic
+
+# 评估 expectimax
+D:\ANOCONDA\envs\learning\python.exe -m scripts.evaluate --agent expectimax
+
+# 评估 supervised_cnn
+D:\ANOCONDA\envs\learning\python.exe -m scripts.evaluate --agent supervised_cnn
+
+# 评估指定 YAML
+D:\ANOCONDA\envs\learning\python.exe -m scripts.evaluate --config src/gymnasium_2048/agents/expectimax/configs/evaluate.yaml
+
+# 只打印解析后的配置
+D:\ANOCONDA\envs\learning\python.exe -m scripts.evaluate --agent heuristic --print-config
+```
+
+### 可视化运行策略
+
+```powershell
+# heuristic
+D:\ANOCONDA\envs\learning\python.exe -m scripts.enjoy --agent heuristic -n 5
+
+# expectimax，使用采样 chance node
+D:\ANOCONDA\envs\learning\python.exe -m scripts.enjoy --agent expectimax --depth 2 --chance-samples 6 -n 1
+
+# supervised_cnn，需要指定 checkpoint
+D:\ANOCONDA\envs\learning\python.exe -m scripts.enjoy --agent supervised_cnn --checkpoint models/supervise/train4/checkpoints/best.pt -n 5
+
+# 录制视频
+D:\ANOCONDA\envs\learning\python.exe -m scripts.enjoy --agent heuristic --record-video --video-folder videos/heuristic -n 3
+```
+
+### 人工游玩与随机策略
+
+```powershell
+# 人工键盘游玩
+D:\ANOCONDA\envs\learning\python.exe -m scripts.play
+
+# 随机策略演示
+D:\ANOCONDA\envs\learning\python.exe -m scripts.random_policy --n-timesteps 100
+```
+
+## Evolution 遗传算法调参
+
+Evolution 现在通过 `--agent heuristic|expectimax` 选择调参目标，并自动加载对应训练配置：
+
+- `src/gymnasium_2048/agents/evolution/configs/train_heuristic.yaml`
+- `src/gymnasium_2048/agents/evolution/configs/train_expectimax.yaml`
+
+训练配置中的 `policy_config` 会引用对应 agent 的 `evaluate.yaml`，训练时可覆盖 `reward_transform`、搜索深度和权重等策略参数。`out_dir` 用于指定训练结果保存目录，命令行 `--out-dir` 可临时覆盖 YAML 中的路径；输出的 `best_<agent>_weights.json` 会保存最佳权重、训练配置和合并后的策略配置。
+
+```powershell
+# 快速冒烟：heuristic
+D:\ANOCONDA\envs\learning\python.exe -m gymnasium_2048.agents.evolution.run_evolution --agent heuristic --population-size 2 --generations 1 --episodes 1 --elite-size 1 --tournament-size 1 --no-progress --out-dir models/evolution_smoke/heuristic
+
+# 快速冒烟：expectimax
+D:\ANOCONDA\envs\learning\python.exe -m gymnasium_2048.agents.evolution.run_evolution --agent expectimax --population-size 2 --generations 1 --episodes 1 --elite-size 1 --tournament-size 1 --no-progress --out-dir models/evolution_smoke/expectimax
+
+# 正式训练 heuristic 权重
+D:\ANOCONDA\envs\learning\python.exe -m gymnasium_2048.agents.evolution.run_evolution --agent heuristic --generations 20 --population-size 20 --episodes 50 --seed 42 --out-dir models/evolution/heuristic
+
+# 正式训练 expectimax 权重
+D:\ANOCONDA\envs\learning\python.exe -m gymnasium_2048.agents.evolution.run_evolution --agent expectimax --generations 15 --population-size 20 --episodes 15 --seed 42 --out-dir models/evolution/expectimax
+
+# 使用指定训练 YAML
+D:\ANOCONDA\envs\learning\python.exe -m gymnasium_2048.agents.evolution.run_evolution --agent expectimax --config src/gymnasium_2048/agents/evolution/configs/train_expectimax.yaml --out-dir models/evolution/expectimax_custom
+```
+
+## Expectimax 教师数据
+
+```powershell
+# 稳健配置：4 workers
+D:\ANOCONDA\envs\learning\python.exe -m scripts.generate_expectimax_data --episodes 1000 --depth 2 --chance-samples 6 --workers 4 --out data/expectimax_d2_sampled_1000eps.npz --seed 42
+
+# CPU 核心充足时可增加 workers
+D:\ANOCONDA\envs\learning\python.exe -m scripts.generate_expectimax_data --episodes 1000 --depth 2 --chance-samples 6 --workers 8 --out data/expectimax_d2_sampled_1000eps_w8.npz --seed 42
+
+# 小规模数据生成冒烟
+D:\ANOCONDA\envs\learning\python.exe -m scripts.generate_expectimax_data --episodes 2 --depth 1 --max-steps 20 --out data/expectimax_smoke.npz --seed 42 --no-progress
+```
+
+## 监督学习 CNN
+
+训练配置位于 `src/gymnasium_2048/agents/supervised_cnn/configs/train.yaml`，评估配置位于 `src/gymnasium_2048/agents/supervised_cnn/configs/evaluate.yaml`。
+
+```powershell
+# 训练学生网络
+D:\ANOCONDA\envs\learning\python.exe -m scripts.train --agent supervised_cnn
+
+# 使用指定训练 YAML
+D:\ANOCONDA\envs\learning\python.exe -m scripts.train --config src/gymnasium_2048/agents/supervised_cnn/configs/train.yaml
+
+# 评估学生网络
+D:\ANOCONDA\envs\learning\python.exe -m scripts.evaluate --agent supervised_cnn
+```
+
+## N-Tuple 强化学习
+
+可训练 agent：`ql`、`tdl`、`tdl-small`。默认配置位于 `src/gymnasium_2048/agents/ntuple/configs/`。
+
+```powershell
+# 训练 TD-Learning
+D:\ANOCONDA\envs\learning\python.exe -m scripts.train --agent tdl
+
+# 训练 Q-Learning
+D:\ANOCONDA\envs\learning\python.exe -m scripts.train --agent ql
+
+# 评估已有 N-Tuple 模型
+D:\ANOCONDA\envs\learning\python.exe -m scripts.evaluate --agent tdl
+```
+
+## 配置文件说明
+
+- `heuristic/configs/evaluate.yaml`：heuristic 评估配置，默认 `reward_transform: raw`，保留旧行为。
+- `expectimax/configs/evaluate.yaml`：expectimax 评估配置，默认 `reward_transform: log2p1`。
+- `evolution/configs/train_heuristic.yaml`：heuristic 权重搜索空间和 evolution 超参数。
+- `evolution/configs/train_expectimax.yaml`：expectimax 权重搜索空间和 evolution 超参数。
+
+`reward_transform` 支持：
+
+- `raw`：直接使用环境 reward。
+- `log2p1`：使用 `log2(reward + 1)`。
+- `none`：忽略即时 reward，主要用于消融实验。
+
 ## 依赖
 
 - Python >= 3.10
 - gymnasium 1.2.1
 - pygame 2.6.1
 - numpy
+- PyYAML
+- tqdm
+- matplotlib
+- torch，用于 supervised_cnn

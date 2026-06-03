@@ -17,6 +17,8 @@ from gymnasium_2048.agents.evolution.genetic import GenerationRecord
 def plot_history(
     history: Sequence[GenerationRecord],
     output_path: str | Path,
+    parameter_names: Sequence[str] = PARAMETER_NAMES,
+    parameter_bounds: np.ndarray = PARAMETER_BOUNDS,
 ) -> None:
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -50,10 +52,11 @@ def plot_history(
     axs[1, 0].set_ylabel("Steps")
     axs[1, 0].grid(True)
 
-    normalized_vectors = (best_vectors - PARAMETER_BOUNDS[:, 0]) / (
-        PARAMETER_BOUNDS[:, 1] - PARAMETER_BOUNDS[:, 0]
+    bounds = np.asarray(parameter_bounds, dtype=np.float64)
+    normalized_vectors = (best_vectors - bounds[:, 0]) / (
+        bounds[:, 1] - bounds[:, 0]
     )
-    for index, name in enumerate(PARAMETER_NAMES):
+    for index, name in enumerate(parameter_names):
         axs[1, 1].plot(generations, normalized_vectors[:, index], label=name)
     axs[1, 1].set_title("Best Parameters")
     axs[1, 1].set_xlabel("Generation")
@@ -65,4 +68,3 @@ def plot_history(
     fig.tight_layout()
     fig.savefig(output_path, dpi=160)
     plt.close(fig)
-

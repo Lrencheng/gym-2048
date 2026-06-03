@@ -11,3 +11,13 @@ depth: 2
 chance_samples: 6
 full_chance_empty_threshold: 6
 device: cpu
+reward_transform: log2p1
+weights:
+  empty_cells: 3.0
+  smoothness: 0.35
+  monotonicity: 1.2
+  merge_potential: 1.0
+  corner_max: 1.4
+  max_tile: 0.6
+  snake: 0.8
+  reward: 1.0

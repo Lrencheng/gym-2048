@@ -7,6 +7,7 @@ import numpy as np
 from gymnasium_2048.agents.heuristic.features import (
     DEFAULT_WEIGHTS,
     HeuristicWeights,
+    RewardTransform,
     evaluate_board,
 )
 from gymnasium_2048.envs import TwentyFortyEightEnv
@@ -15,6 +16,7 @@ from gymnasium_2048.envs import TwentyFortyEightEnv
 @dataclass
 class HeuristicPolicy:
     weights: HeuristicWeights = DEFAULT_WEIGHTS
+    reward_transform: RewardTransform = "raw"
 
     def evaluate(self, state: np.ndarray, action: int) -> float:
        
@@ -30,6 +32,7 @@ class HeuristicPolicy:
             board=next_board,
             reward=float(reward),
             weights=self.weights,
+            reward_transform=self.reward_transform,
         )
 
     def predict(self, state: np.ndarray) -> int:
@@ -40,4 +43,3 @@ class HeuristicPolicy:
             return 0
 
         return int(np.argmax(action_scores))
-

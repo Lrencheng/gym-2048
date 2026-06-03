@@ -2,7 +2,7 @@ agent: heuristic
 env_id: gymnasium_2048:gymnasium_2048/TwentyFortyEight-v0
 trained_agent: null
 checkpoint: null
-episodes: 1000
+episodes: 100
 seed: 42
 title: Heuristic Evaluation
 output_path: null
@@ -11,3 +11,12 @@ depth: 2
 chance_samples: null
 full_chance_empty_threshold: 6
 device: cpu
+reward_transform: log2p1
+weights:
+  empty_cells: 12.271004
+  smoothness: 0.859501
+  monotonicity: 2.891370
+  corner_max: 3.555273
+  merge_potential: 2.732829
+  edge_bonus: 0.098447
+  reward: 1.021244

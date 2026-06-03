@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
+from typing import Literal
 
 import numpy as np
+
+RewardTransform = Literal["raw", "log2p1", "none"]
 
 
 @dataclass(frozen=True)
@@ -36,6 +40,26 @@ baseline参数:
 
 DEFAULT_WEIGHTS = HeuristicWeights()
 
+SNAKE_WEIGHTS = np.array(
+    [
+        [15.0, 14.0, 13.0, 12.0],
+        [8.0, 9.0, 10.0, 11.0],
+        [7.0, 6.0, 5.0, 4.0],
+        [0.0, 1.0, 2.0, 3.0],
+    ],
+    dtype=np.float64,
+)
+
+
+def transform_reward(reward: float, transform: RewardTransform = "raw") -> float:
+    if transform == "raw":
+        return float(reward)
+    if transform == "log2p1":
+        return float(np.log2(reward + 1.0)) if reward > 0 else 0.0
+    if transform == "none":
+        return 0.0
+    raise ValueError(f"unknown reward_transform: {transform!r}")
+
 
 def actual_tile_values(board: np.ndarray) -> np.ndarray:
     values = np.zeros_like(board, dtype=np.int64)
@@ -67,8 +91,9 @@ def smoothness(board: np.ndarray) -> float:
     return score
 
 
-def _line_monotonicity(line: np.ndarray) -> float:
-    non_empty = [int(value) for value in line if value != 0]
+@lru_cache(maxsize=200_000)
+def _line_monotonicity_cached(line: tuple[int, ...]) -> float:
+    non_empty = [value for value in line if value != 0]
     if len(non_empty) < 2:
         return 0.0
 
@@ -80,6 +105,10 @@ def _line_monotonicity(line: np.ndarray) -> float:
         decreasing_score -= max(0, diff)
 
     return max(increasing_score, decreasing_score)
+
+
+def _line_monotonicity(line: np.ndarray) -> float:
+    return _line_monotonicity_cached(tuple(int(value) for value in line))
 
 
 def monotonicity(board: np.ndarray) -> float:
@@ -141,11 +170,21 @@ def edge_bonus(board: np.ndarray) -> float:
     return float(np.sum(values[edge_mask]))
 
 
+def max_tile(board: np.ndarray) -> float:
+    return float(np.max(board))
+
+
+def snake_score(board: np.ndarray) -> float:
+    return float(np.sum(np.asarray(board, dtype=np.float64) * SNAKE_WEIGHTS) / 16.0)
+
+
 def evaluate_board(
     board: np.ndarray,
     reward: float = 0.0,
     weights: HeuristicWeights = DEFAULT_WEIGHTS,
+    reward_transform: RewardTransform = "raw",
 ) -> float:
+    reward_score = transform_reward(reward, reward_transform)
     return (
         weights.empty_cells * empty_cells(board)
         + weights.smoothness * smoothness(board)
@@ -153,6 +192,5 @@ def evaluate_board(
         + weights.corner_max * corner_max(board)
         + weights.merge_potential * merge_potential(board)
         + weights.edge_bonus * edge_bonus(board)
-        + weights.reward * reward
+        + weights.reward * reward_score
     )
-
