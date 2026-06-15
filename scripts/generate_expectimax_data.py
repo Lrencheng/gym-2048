@@ -1,6 +1,7 @@
 import argparse
 
 from gymnasium_2048.agents.expectimax import (
+    augment_afterstate_samples,
     generate_expectimax_dataset,
     save_expectimax_dataset,
 )
@@ -45,7 +46,32 @@ def parse_args() -> argparse.Namespace:
         default=1,
         help="number of worker processes for parallel episode generation",
     )
-    parser.add_argument("--no-progress", action="store_true", help="disable progress bar")
+    parser.add_argument(
+        "--reward-transform",
+        choices=["raw", "log2p1", "none"],
+        default="raw",
+        help="utility transform applied to merge rewards inside expectimax",
+    )
+    parser.add_argument(
+        "--symmetry-augmentation",
+        action="store_true",
+        help="store all eight D4 transforms of every afterstate sample",
+    )
+    parser.add_argument(
+        "--debug-fields",
+        action="store_true",
+        help="also store root_boards and target_qs",
+    )
+    parser.add_argument(
+        "--shard-size",
+        type=int,
+        help="maximum samples per numbered NPZ shard",
+    )
+    parser.add_argument(
+        "--no-progress",
+        action="store_true",
+        help="disable progress bar",
+    )
     return parser.parse_args()
 
 
@@ -61,16 +87,26 @@ def main() -> None:
         chance_samples=args.chance_samples,
         full_chance_empty_threshold=args.full_chance_empty_threshold,
         workers=args.workers,
+        reward_transform=args.reward_transform,
+        debug_fields=args.debug_fields,
     )
-    save_expectimax_dataset(dataset, args.out)
+    if args.symmetry_augmentation:
+        dataset = augment_afterstate_samples(dataset)
+    saved_paths = save_expectimax_dataset(
+        dataset,
+        args.out,
+        shard_size=args.shard_size,
+    )
     metadata = dataset["metadata"]
     print(
-        "Generated Expectimax dataset: "
+        "Generated Expectimax afterstate dataset: "
         f"samples={metadata['num_samples']}, "
+        f"roots={metadata['num_roots']}, "
         f"episodes={metadata['episodes']}, "
         f"depth={metadata['depth']}, "
         f"chance_samples={metadata['chance_samples']}, "
         f"workers={metadata['workers']}, "
+        f"files={len(saved_paths)}, "
         f"out={args.out}"
     )
 

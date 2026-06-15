@@ -6,7 +6,13 @@ from typing import Any
 from gymnasium_2048.agents.config import resolve_agent
 
 
-TRAIN_AGENTS = {"ql", "tdl", "tdl-small", "supervised_cnn"}
+TRAIN_AGENTS = {
+    "ql",
+    "tdl",
+    "tdl-small",
+    "supervised_cnn",
+    "supervised_ntuple",
+}
 EVALUATE_AGENTS = {
     "ql",
     "tdl",
@@ -14,6 +20,7 @@ EVALUATE_AGENTS = {
     "heuristic",
     "expectimax",
     "supervised_cnn",
+    "supervised_ntuple",
 }
 
 
@@ -27,6 +34,16 @@ def run_train_command(
         from gymnasium_2048.agents.supervised_cnn.config import train_supervised_from_yaml
 
         return train_supervised_from_yaml(
+            config_path=config_path,
+            agent=resolved_agent,
+            print_config=print_config,
+        )
+    if resolved_agent == "supervised_ntuple":
+        from gymnasium_2048.agents.supervised_ntuple.config import (
+            train_supervised_ntuple_from_yaml,
+        )
+
+        return train_supervised_ntuple_from_yaml(
             config_path=config_path,
             agent=resolved_agent,
             print_config=print_config,

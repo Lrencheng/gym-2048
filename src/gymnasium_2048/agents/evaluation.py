@@ -26,6 +26,7 @@ from gymnasium_2048.agents.expectimax import (
 from gymnasium_2048.agents.heuristic import HeuristicPolicy, HeuristicWeights
 from gymnasium_2048.agents.ntuple.training import make_ntuple_policy
 from gymnasium_2048.agents.supervised_cnn import SupervisedCNNPolicy
+from gymnasium_2048.agents.supervised_ntuple import SupervisedNTuplePolicy
 
 
 plt.style.use("ggplot")
@@ -53,6 +54,7 @@ class EvaluationConfig:
     device: str = "cpu"
     weights: dict[str, float] | None = None
     reward_transform: str | None = None
+    symmetry_average: bool = False
 
 
 def _make_heuristic_weights(data: dict[str, float] | None) -> HeuristicWeights:
@@ -94,8 +96,24 @@ def make_policy(config: EvaluationConfig) -> PredictPolicy | None:
             raise ValueError("supervised_cnn evaluation requires checkpoint in YAML")
         return SupervisedCNNPolicy.load(
             model_path,
+            depth=config.depth,
             device=config.device,
             seed=config.seed,
+            chance_samples=config.chance_samples,
+            full_chance_empty_threshold=config.full_chance_empty_threshold,
+            symmetry_average=config.symmetry_average,
+        )
+    if agent == "supervised_ntuple":
+        if model_path is None:
+            raise ValueError(
+                "supervised_ntuple evaluation requires trained_agent in YAML"
+            )
+        return SupervisedNTuplePolicy.load(
+            model_path,
+            depth=config.depth,
+            seed=config.seed,
+            chance_samples=config.chance_samples,
+            full_chance_empty_threshold=config.full_chance_empty_threshold,
         )
     if agent in {"ql", "tdl", "tdl-small"}:
         if model_path is None:

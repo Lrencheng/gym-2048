@@ -1,27 +1,16 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import torch
-from torch.nn import functional as F
 
-from gymnasium_2048.agents.expectimax.board import (
-    NUM_ACTIONS,
-    board_from_observation,
-    normalize_legal_mask,
+from gymnasium_2048.agents.expectimax import ExpectimaxPolicy, all_symmetries
+from gymnasium_2048.agents.supervised_cnn.encoding import encode_boards
+from gymnasium_2048.agents.supervised_cnn.model import (
+    SupervisedCNN,
+    config_from_dict,
 )
-from gymnasium_2048.agents.supervised_cnn.encoding import encode_board
-from gymnasium_2048.agents.supervised_cnn.model import SupervisedCNN, config_from_dict
-
-
-@dataclass(frozen=True)
-class SupervisedCNNResult:
-    action: int
-    logits: np.ndarray
-    legal_mask: np.ndarray
-    probabilities: np.ndarray
 
 
 def _torch_load(path: str | Path, map_location: torch.device) -> dict:
@@ -31,70 +20,97 @@ def _torch_load(path: str | Path, map_location: torch.device) -> dict:
         return torch.load(path, map_location=map_location)
 
 
-class SupervisedCNNPolicy:
+class CNNAfterstateEvaluator:
     def __init__(
         self,
-        checkpoint: str | Path,
-        device: str = "cpu",
-        seed: int | None = None,
+        model: SupervisedCNN,
+        *,
+        target_mean: float = 0.0,
+        target_std: float = 1.0,
+        device: str | torch.device = "cpu",
+        symmetry_average: bool = False,
     ) -> None:
         self.device = torch.device(device)
-        payload = _torch_load(checkpoint, map_location=self.device)
-        self.config = config_from_dict(payload.get("model_config"))
-        self.model = SupervisedCNN(self.config).to(self.device)
-        self.model.load_state_dict(payload["model_state_dict"])
+        self.model = model.to(self.device)
         self.model.eval()
-        self.rng = np.random.default_rng(seed)
+        self.target_mean = float(target_mean)
+        self.target_std = float(target_std)
+        self.symmetry_average = bool(symmetry_average)
 
     @classmethod
     def load(
         cls,
         path: str | Path,
+        *,
         device: str = "cpu",
-        seed: int | None = None,
-    ) -> "SupervisedCNNPolicy":
-        return cls(checkpoint=path, device=device, seed=seed)
-
-    def analyze(
-        self,
-        state: np.ndarray,
-        legal_mask: np.ndarray | None = None,
-    ) -> SupervisedCNNResult:
-        board = board_from_observation(state)
-        mask = normalize_legal_mask(board, legal_mask)
-
-        encoded = encode_board(board, num_channels=self.config.input_channels)
-        tensor = torch.from_numpy(encoded).unsqueeze(0).to(self.device)
-        with torch.no_grad():
-            logits = self.model(tensor).squeeze(0).cpu().numpy().astype(np.float64)
-
-        if not np.any(mask):
-            return SupervisedCNNResult(
-                action=0,
-                logits=logits,
-                legal_mask=mask,
-                probabilities=np.zeros(NUM_ACTIONS, dtype=np.float64),
-            )
-
-        masked_logits = np.where(mask, logits, -1.0e9)
-        probabilities = F.softmax(torch.from_numpy(masked_logits), dim=-1).numpy()
-        return SupervisedCNNResult(
-            action=int(np.argmax(masked_logits)),
-            logits=logits,
-            legal_mask=mask,
-            probabilities=probabilities,
+        symmetry_average: bool = False,
+    ) -> "CNNAfterstateEvaluator":
+        torch_device = torch.device(device)
+        payload = _torch_load(path, torch_device)
+        model = SupervisedCNN(config_from_dict(payload.get("model_config")))
+        model.load_state_dict(payload["model_state_dict"])
+        return cls(
+            model,
+            target_mean=float(payload.get("target_mean", 0.0)),
+            target_std=float(payload.get("target_std", 1.0)),
+            device=torch_device,
+            symmetry_average=symmetry_average,
         )
 
-    def predict(self, state: np.ndarray, legal_mask: np.ndarray | None = None) -> int:
-        return self.analyze(state=state, legal_mask=legal_mask).action
+    def evaluate_afterstate(self, after_board: np.ndarray) -> float:
+        boards = (
+            all_symmetries(after_board)
+            if self.symmetry_average
+            else np.asarray(after_board, dtype=np.uint8)[None, :, :]
+        )
+        encoded = encode_boards(
+            boards,
+            num_channels=self.model.config.input_channels,
+        )
+        tensor = torch.from_numpy(encoded).to(self.device)
+        with torch.no_grad():
+            normalized = self.model(tensor)
+        values = normalized * self.target_std + self.target_mean
+        return float(values.mean().cpu())
 
-    def act(
+    def __call__(self, after_board: np.ndarray) -> float:
+        return self.evaluate_afterstate(after_board)
+
+
+class SupervisedCNNPolicy:
+    def __init__(
         self,
-        observation: np.ndarray,
-        legal_mask: np.ndarray | None = None,
-        deterministic: bool = True,
-    ) -> int:
-        result = self.analyze(state=observation, legal_mask=legal_mask)
-        if deterministic or not np.any(result.legal_mask):
-            return result.action
-        return int(self.rng.choice(NUM_ACTIONS, p=result.probabilities))
+        checkpoint: str | Path,
+        *,
+        depth: int = 0,
+        device: str = "cpu",
+        seed: int | None = None,
+        chance_samples: int | None = None,
+        full_chance_empty_threshold: int = 6,
+        symmetry_average: bool = False,
+    ) -> None:
+        self.evaluator = CNNAfterstateEvaluator.load(
+            checkpoint,
+            device=device,
+            symmetry_average=symmetry_average,
+        )
+        self.search_policy = ExpectimaxPolicy(
+            depth=depth,
+            evaluator=self.evaluator,
+            seed=seed,
+            chance_samples=chance_samples,
+            full_chance_empty_threshold=full_chance_empty_threshold,
+        )
+
+    @classmethod
+    def load(cls, path: str | Path, **kwargs) -> "SupervisedCNNPolicy":
+        return cls(checkpoint=path, **kwargs)
+
+    def analyze(self, state: np.ndarray):
+        return self.search_policy.analyze(state)
+
+    def predict(self, state: np.ndarray) -> int:
+        return self.search_policy.predict(state)
+
+    def act(self, observation: np.ndarray, deterministic: bool = True) -> int:
+        return self.search_policy.act(observation, deterministic=deterministic)

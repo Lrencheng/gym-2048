@@ -1,13 +1,13 @@
 agent: supervised_cnn
 env_id: gymnasium_2048:gymnasium_2048/TwentyFortyEight-v0
-checkpoint: models/supervise/train4/checkpoints/best.pt
-trained_agent: null
+checkpoint: models/supervised_cnn/train1/checkpoints/best.pt
 episodes: 1000
 seed: 42
-title: Supervised CNN Evaluation
-output_path: figures/train4_eval.png
+title: Supervised CNN Afterstate Value Evaluation
+output_path: figures/supervised_cnn_value_eval.png
 plot: true
-depth: 2
+depth: 0
 chance_samples: null
 full_chance_empty_threshold: 6
 device: cuda
+symmetry_average: false

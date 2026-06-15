@@ -14,6 +14,7 @@ from gymnasium_2048.agents.ntuple import (
     NTupleNetworkTDPolicySmall,
 )
 from gymnasium_2048.agents.supervised_cnn import SupervisedCNNPolicy
+from gymnasium_2048.agents.supervised_ntuple import SupervisedNTuplePolicy
 
 
 class PredictPolicy(Protocol):
@@ -32,7 +33,15 @@ def parse_args() -> argparse.Namespace:
         dest="algo",
         default="tdl",
         help="agent or RL algorithm",
-        choices=["ql", "tdl", "tdl-small", "heuristic", "expectimax", "supervised_cnn"],
+        choices=[
+            "ql",
+            "tdl",
+            "tdl-small",
+            "heuristic",
+            "expectimax",
+            "supervised_cnn",
+            "supervised_ntuple",
+        ],
     )
     parser.add_argument(
         "--env",
@@ -47,7 +56,13 @@ def parse_args() -> argparse.Namespace:
         default="",
         help="path to a trained agent or checkpoint",
     )
-    parser.add_argument("-n", "--n-episodes", type=int, default=1, help="number of episodes")
+    parser.add_argument(
+        "-n",
+        "--n-episodes",
+        type=int,
+        default=1,
+        help="number of episodes",
+    )
     parser.add_argument("--depth", type=int, default=2, help="Expectimax search depth")
     parser.add_argument(
         "--chance-samples",
@@ -58,12 +73,19 @@ def parse_args() -> argparse.Namespace:
         "--full-chance-empty-threshold",
         type=int,
         default=6,
-        help="empty-cell count at or below which Expectimax chance nodes enumerate all cells",
+        help=(
+            "empty-cell count at or below which Expectimax chance nodes "
+            "enumerate all cells"
+        ),
     )
     parser.add_argument("--device", default="cpu", help="device for supervised CNN")
     parser.add_argument("--seed", type=int, default=42, help="random generator seed")
     parser.add_argument("--record-video", action="store_true", help="record videos")
-    parser.add_argument("--video-folder", default="videos", help="path to videos folder")
+    parser.add_argument(
+        "--video-folder",
+        default="videos",
+        help="path to videos folder",
+    )
     return parser.parse_args()
 
 
@@ -88,7 +110,24 @@ def make_policy(
     if algo == "supervised_cnn":
         if not trained_agent:
             raise ValueError("supervised_cnn requires --checkpoint")
-        return SupervisedCNNPolicy.load(trained_agent, device=device, seed=seed)
+        return SupervisedCNNPolicy.load(
+            trained_agent,
+            depth=depth,
+            device=device,
+            seed=seed,
+            chance_samples=chance_samples,
+            full_chance_empty_threshold=full_chance_empty_threshold,
+        )
+    if algo == "supervised_ntuple":
+        if not trained_agent:
+            raise ValueError("supervised_ntuple requires --trained-agent")
+        return SupervisedNTuplePolicy.load(
+            trained_agent,
+            depth=depth,
+            seed=seed,
+            chance_samples=chance_samples,
+            full_chance_empty_threshold=full_chance_empty_threshold,
+        )
 
     algo_policy_map: dict[str, type[NTupleNetworkBasePolicy]] = {
         "ql": NTupleNetworkQLearningPolicy,

@@ -24,7 +24,9 @@ def encode_boards(boards: np.ndarray, num_channels: int = 16) -> np.ndarray:
     states = np.asarray(boards)
     if states.ndim != 3:
         raise ValueError(f"expected boards with shape (N, H, W), got {states.shape}")
-    return np.stack([encode_board(board, num_channels=num_channels) for board in states])
+    return np.stack(
+        [encode_board(board, num_channels=num_channels) for board in states]
+    )
 
 
 def encode_boards_torch(
@@ -35,7 +37,9 @@ def encode_boards_torch(
     if num_channels < 2:
         raise ValueError("num_channels must be at least 2")
     if boards.ndim != 3:
-        raise ValueError(f"expected boards with shape (N, H, W), got {tuple(boards.shape)}")
+        raise ValueError(
+            f"expected boards with shape (N, H, W), got {tuple(boards.shape)}"
+        )
     clipped = boards.to(dtype=torch.long).clamp_(0, num_channels - 1)
     return (
         F.one_hot(clipped, num_classes=num_channels)

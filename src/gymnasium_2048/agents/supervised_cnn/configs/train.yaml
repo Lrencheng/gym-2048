@@ -1,6 +1,6 @@
 agent: supervised_cnn
-data_path: data/expectimax_d2_sampled_1000eps.npz
-out_root: models/supervise
+data_path: data/expectimax_afterstates
+out_root: models/supervised_cnn
 run_name: null
 out_dir: null
 
@@ -8,32 +8,15 @@ epochs: 40
 batch_size: 2048
 learning_rate: 0.001
 weight_decay: 0.0001
-temperature: 1.0
 validation_fraction: 0.2
 device: cuda
 seed: 42
-
-use_high_score_weighting: true
-score_weight: 0.5
-tile_weight: 0.4
-late_game_weight: 0.2
-difficulty_weight: 0.2
-max_sample_weight: 3.0
-copy_training_data: true
-
 num_workers: 4
-persistent_workers: true
-prefetch_factor: 4
 pin_memory: true
-drop_last: false
 
-encode_on_device: true
-compute_train_accuracy: true
-validation_interval: 1
-validation_max_samples: 100000
-
-amp: true
-allow_tf32: true
-torch_compile: false
-profile: true
-profile_batches: 50
+input_channels: 16
+conv_channels: 64
+hidden_size: 128
+loss: huber
+target_normalization: true
+symmetry_augmentation: true

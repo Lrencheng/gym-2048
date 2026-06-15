@@ -1,6 +1,6 @@
 # 2048 智能体项目
 
-本项目基于 [Quentin18/gymnasium-2048](https://github.com/Quentin18/gymnasium-2048) 二次开发，用 2048 游戏环境对比和训练多种智能体策略，包括启发式搜索、Expectimax、遗传算法调参、监督学习蒸馏以及 N-Tuple 强化学习。
+本项目基于 [Quentin18/gymnasium-2048](https://github.com/Quentin18/gymnasium-2048) 二次开发，用 2048 游戏环境对比和训练多种智能体策略，包括启发式搜索、Expectimax、遗传算法调参、afterstate value 监督学习以及 N-Tuple 强化学习。
 
 ## Python 环境
 
@@ -31,7 +31,7 @@ gymnasium-2048/
 │   ├── random_policy.py             # 随机策略演示
 │   ├── enjoy.py                     # 加载策略并可视化运行
 │   ├── evaluate.py                  # 按 YAML 评估智能体
-│   ├── train.py                     # 按 YAML 训练 N-Tuple / supervised_cnn
+│   ├── train.py                     # 按 YAML 训练各类可训练 agent
 │   └── generate_expectimax_data.py  # 生成 Expectimax 教师数据
 ├── src/gymnasium_2048/
 │   ├── envs/                        # Gymnasium 2048 环境
@@ -40,7 +40,8 @@ gymnasium-2048/
 │       ├── heuristic/               # 一步启发式策略与共享特征库
 │       ├── expectimax/              # Expectimax 搜索策略与教师数据生成
 │       ├── evolution/               # 遗传算法调参，支持 heuristic / expectimax
-│       ├── supervised_cnn/          # CNN 学生模型与蒸馏训练
+│       ├── supervised_cnn/          # CNN afterstate value 回归
+│       ├── supervised_ntuple/       # 监督学习对称 N-Tuple value
 │       └── ntuple/                  # N-Tuple TD/Q-Learning
 ├── tests/                           # 单元测试与集成冒烟测试
 ├── models/                          # 训练产物
@@ -72,6 +73,9 @@ D:\ANOCONDA\envs\learning\python.exe -m scripts.evaluate --agent expectimax
 # 评估 supervised_cnn
 D:\ANOCONDA\envs\learning\python.exe -m scripts.evaluate --agent supervised_cnn
 
+# 评估 supervised_ntuple
+D:\ANOCONDA\envs\learning\python.exe -m scripts.evaluate --agent supervised_ntuple
+
 # 评估指定 YAML
 D:\ANOCONDA\envs\learning\python.exe -m scripts.evaluate --config src/gymnasium_2048/agents/expectimax/configs/evaluate.yaml
 
@@ -88,8 +92,11 @@ D:\ANOCONDA\envs\learning\python.exe -m scripts.enjoy --agent heuristic -n 5
 # expectimax，使用采样 chance node
 D:\ANOCONDA\envs\learning\python.exe -m scripts.enjoy --agent expectimax --depth 2 --chance-samples 6 -n 1
 
-# supervised_cnn，需要指定 checkpoint
-D:\ANOCONDA\envs\learning\python.exe -m scripts.enjoy --agent supervised_cnn --checkpoint models/supervise/train4/checkpoints/best.pt -n 5
+# supervised_cnn，depth=0 表示直接用 CNN 估值 afterstate
+D:\ANOCONDA\envs\learning\python.exe -m scripts.enjoy --agent supervised_cnn --checkpoint models/supervised_cnn/train1/checkpoints/best.pt --depth 0 -n 5
+
+# supervised_ntuple
+D:\ANOCONDA\envs\learning\python.exe -m scripts.enjoy --agent supervised_ntuple --trained-agent models/supervised_ntuple/value_model.npz --depth 0 -n 5
 
 # 录制视频
 D:\ANOCONDA\envs\learning\python.exe -m scripts.enjoy --agent heuristic --record-video --video-folder videos/heuristic -n 3
@@ -141,30 +148,58 @@ D:\ANOCONDA\envs\learning\python.exe -m gymnasium_2048.agents.evolution.run_expe
 
 ## Expectimax 教师数据
 
-```powershell
-# 稳健配置：4 workers
-D:\ANOCONDA\envs\learning\python.exe -m scripts.generate_expectimax_data --episodes 1000 --depth 2 --chance-samples 6 --workers 4 --out data/expectimax_d2_sampled_1000eps.npz --seed 42
+每个根状态会枚举所有合法动作，并保存：
 
-# CPU 核心充足时可增加 workers
-D:\ANOCONDA\envs\learning\python.exe -m scripts.generate_expectimax_data --episodes 1000 --depth 2 --chance-samples 6 --workers 8 --out data/expectimax_d2_sampled_1000eps_w8.npz --seed 42
-
-# 小规模数据生成冒烟
-D:\ANOCONDA\envs\learning\python.exe -m scripts.generate_expectimax_data --episodes 2 --depth 1 --max-steps 20 --out data/expectimax_smoke.npz --seed 42 --no-progress
+```text
+after_boards -> target_us
 ```
 
-## 监督学习 CNN
+其中动作价值始终按 `immediate_reward + target_u` 计算；CNN 和监督
+N-Tuple 只拟合 `target_u`。
+
+```powershell
+# 单个压缩 NPZ
+D:\ANOCONDA\envs\learning\python.exe -m scripts.generate_expectimax_data --episodes 1000 --depth 2 --chance-samples 6 --workers 4 --out data/expectimax_afterstates.npz --seed 42
+
+# 分片保存，并预生成全部 8 种对称样本
+D:\ANOCONDA\envs\learning\python.exe -m scripts.generate_expectimax_data --episodes 1000 --depth 2 --workers 8 --out data/expectimax_afterstates --shard-size 100000 --symmetry-augmentation --seed 42
+
+# 小规模数据生成冒烟
+D:\ANOCONDA\envs\learning\python.exe -m scripts.generate_expectimax_data --episodes 2 --depth 0 --max-steps 20 --out data/expectimax_smoke.npz --seed 42 --no-progress
+```
+
+`depth` 表示随机新块生成后还向前搜索多少次玩家决策；`depth=0`
+直接用叶 evaluator 估值当前 afterstate。
+
+## Afterstate Value CNN
 
 训练配置位于 `src/gymnasium_2048/agents/supervised_cnn/configs/train.yaml`，评估配置位于 `src/gymnasium_2048/agents/supervised_cnn/configs/evaluate.yaml`。
 
 ```powershell
-# 训练学生网络
+# 训练标量 U(x) 回归网络；训练集每次读取会随机应用一种 D4 对称
 D:\ANOCONDA\envs\learning\python.exe -m scripts.train --agent supervised_cnn
 
 # 使用指定训练 YAML
 D:\ANOCONDA\envs\learning\python.exe -m scripts.train --config src/gymnasium_2048/agents/supervised_cnn/configs/train.yaml
 
-# 评估学生网络
+# 用 CNN 作为 expectimax 叶 evaluator 评估
 D:\ANOCONDA\envs\learning\python.exe -m scripts.evaluate --agent supervised_cnn
+```
+
+## 监督学习 N-Tuple
+
+监督 N-Tuple 与原有 TD/Q-learning 模块独立，默认通过 8 种 D4 对称聚合
+得到对称的 afterstate value。
+
+```powershell
+# 训练监督 N-Tuple
+D:\ANOCONDA\envs\learning\python.exe -m scripts.train --agent supervised_ntuple
+
+# 使用指定配置
+D:\ANOCONDA\envs\learning\python.exe -m scripts.train --config src/gymnasium_2048/agents/supervised_ntuple/configs/train.yaml
+
+# 用监督 N-Tuple 作为 expectimax 叶 evaluator 评估
+D:\ANOCONDA\envs\learning\python.exe -m scripts.evaluate --agent supervised_ntuple
 ```
 
 ## N-Tuple 强化学习
@@ -185,7 +220,9 @@ D:\ANOCONDA\envs\learning\python.exe -m scripts.evaluate --agent tdl
 ## 配置文件说明
 
 - `heuristic/configs/evaluate.yaml`：heuristic 评估配置，默认 `reward_transform: raw`，保留旧行为。
-- `expectimax/configs/evaluate.yaml`：expectimax 评估配置，默认 `reward_transform: log2p1`。
+- `expectimax/configs/evaluate.yaml`：expectimax 评估配置；`depth` 使用 afterstate recurrence 语义。
+- `supervised_cnn/configs/*.yaml`：CNN value 回归训练与 expectimax 集成评估。
+- `supervised_ntuple/configs/*.yaml`：监督 N-Tuple value 回归训练与评估。
 - `evolution/configs/train_heuristic.yaml`：heuristic 权重搜索空间和 evolution 超参数。
 - `evolution/configs/train_expectimax.yaml`：expectimax 权重搜索空间和 evolution 超参数。
 

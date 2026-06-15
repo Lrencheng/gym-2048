@@ -4,40 +4,16 @@ import torch
 from torch.nn import functional as F
 
 
-def masked_soft_cross_entropy(
-    logits: torch.Tensor,
-    target_probs: torch.Tensor,
-    legal_mask: torch.Tensor,
-    sample_weight: torch.Tensor | None = None,
-    temperature: float = 1.0,
+def regression_loss(
+    predictions: torch.Tensor,
+    targets: torch.Tensor,
+    *,
+    kind: str = "huber",
 ) -> torch.Tensor:
-    """Distill teacher probabilities while excluding illegal actions."""
-    if logits.shape != target_probs.shape or logits.shape != legal_mask.shape:
-        raise ValueError("logits, target_probs, and legal_mask must have matching shapes")
-
-    temperature = max(float(temperature), 1e-6)
-    mask = legal_mask.bool()
-    valid = mask.any(dim=-1)
-
-    # AMP may produce float16 logits; do the masked softmax math in float32 so
-    # the illegal-action sentinel stays representable and the loss remains stable.
-    masked_logits = logits.float() / temperature
-    masked_logits = masked_logits.masked_fill(~mask, -1.0e9)
-    log_probs = F.log_softmax(masked_logits, dim=-1)
-
-    targets = target_probs.float().masked_fill(~mask, 0.0)
-    target_sums = targets.sum(dim=-1, keepdim=True)
-    mask_counts = mask.sum(dim=-1, keepdim=True).clamp_min(1)
-    uniform_targets = mask.float() / mask_counts.float()
-    targets = torch.where(target_sums > 1.0e-8, targets / target_sums.clamp_min(1.0e-8), uniform_targets)
-
-    per_sample = -(targets * log_probs).sum(dim=-1) * (temperature**2)
-    per_sample = torch.where(valid, per_sample, torch.zeros_like(per_sample))
-
-    if sample_weight is not None:
-        weights = sample_weight.float().to(per_sample.device)
-        per_sample = per_sample * weights
-        denom = (weights * valid.float()).sum().clamp_min(1.0)
-    else:
-        denom = valid.float().sum().clamp_min(1.0)
-    return per_sample.sum() / denom
+    if predictions.shape != targets.shape:
+        raise ValueError("predictions and targets must have matching shapes")
+    if kind == "huber":
+        return F.smooth_l1_loss(predictions.float(), targets.float())
+    if kind == "mse":
+        return F.mse_loss(predictions.float(), targets.float())
+    raise ValueError(f"unknown regression loss: {kind!r}")
