@@ -49,6 +49,16 @@ SNAKE_WEIGHTS = np.array(
     ],
     dtype=np.float64,
 )
+SNAKE_WEIGHT_SYMMETRIES = np.stack(
+    [
+        transformed
+        for rotations in range(4)
+        for transformed in (
+            np.rot90(SNAKE_WEIGHTS, rotations),
+            np.fliplr(np.rot90(SNAKE_WEIGHTS, rotations)),
+        )
+    ]
+)
 
 
 def transform_reward(reward: float, transform: RewardTransform = "raw") -> float:
@@ -175,7 +185,9 @@ def max_tile(board: np.ndarray) -> float:
 
 
 def snake_score(board: np.ndarray) -> float:
-    return float(np.sum(np.asarray(board, dtype=np.float64) * SNAKE_WEIGHTS) / 16.0)
+    state = np.asarray(board, dtype=np.float64)
+    scores = np.sum(SNAKE_WEIGHT_SYMMETRIES * state, axis=(1, 2))
+    return float(np.max(scores) / 16.0)
 
 
 def evaluate_board(

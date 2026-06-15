@@ -5,7 +5,7 @@ checkpoint: null
 episodes: 20
 seed: 42
 title: Expectimax Evaluation
-output_path: null
+output_path: figures/Expectimax_eval_snake_sym.png
 plot: false
 depth: 2
 chance_samples: 6
@@ -21,3 +21,5 @@ weights:
   max_tile: 4.922587
   snake: 1.5524917719873559
   reward: 2.168769582941601
+
+#snake: 1.5524917719873559
