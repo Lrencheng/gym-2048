@@ -41,6 +41,7 @@ class SupervisedTrainingYamlConfig:
     loss: str = "huber"
     target_normalization: bool = True
     symmetry_augmentation: bool = True
+    progress: bool = True
 
 
 def next_supervised_run_dir(

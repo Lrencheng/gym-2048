@@ -1,15 +1,20 @@
 import numpy as np
 import pytest
 import torch
+from torch.utils.data import DataLoader, TensorDataset
 
 from gymnasium_2048.agents.expectimax import save_expectimax_dataset
+from gymnasium_2048.agents import supervised_cnn
 from gymnasium_2048.agents.supervised_cnn import (
     CNNAfterstateEvaluator,
+    CNNConfig,
+    SupervisedCNN,
     SupervisedTrainingConfig,
     encode_board,
     resolve_device,
     train_supervised_cnn,
 )
+from gymnasium_2048.agents.supervised_cnn.train import _run_epoch
 
 
 def _write_toy_dataset(path):
@@ -78,3 +83,45 @@ def test_resolve_device_auto_returns_valid_torch_device():
     device = resolve_device("auto")
 
     assert device.type in {"cpu", "cuda"}
+
+
+def test_run_epoch_reports_batch_progress_with_loss(monkeypatch):
+    progress_bars = []
+
+    class FakeTqdm:
+        def __init__(self, iterable, **kwargs):
+            self.iterable = iterable
+            self.kwargs = kwargs
+            self.postfixes = []
+            progress_bars.append(self)
+
+        def __iter__(self):
+            yield from self.iterable
+
+        def set_postfix(self, **kwargs):
+            self.postfixes.append(kwargs)
+
+    monkeypatch.setattr(supervised_cnn.train, "tqdm", FakeTqdm)
+
+    boards = torch.zeros((4, 16, 4, 4), dtype=torch.float32)
+    targets = torch.arange(4, dtype=torch.float32)
+    loader = DataLoader(TensorDataset(boards, targets), batch_size=2)
+    model = SupervisedCNN(CNNConfig(input_channels=16, conv_channels=4, hidden_size=8))
+
+    loss = _run_epoch(
+        model,
+        loader,
+        torch.device("cpu"),
+        target_mean=0.0,
+        target_std=1.0,
+        loss_kind="mse",
+        optimizer=None,
+        description="Epoch 1/2 validation",
+        progress=True,
+    )
+
+    assert isinstance(loss, float)
+    assert progress_bars[0].kwargs["desc"] == "Epoch 1/2 validation"
+    assert progress_bars[0].kwargs["unit"] == "batch"
+    assert len(progress_bars[0].postfixes) == 2
+    assert "loss" in progress_bars[0].postfixes[-1]

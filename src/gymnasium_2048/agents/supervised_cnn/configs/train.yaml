@@ -20,3 +20,4 @@ hidden_size: 128
 loss: huber
 target_normalization: true
 symmetry_augmentation: true
+progress: true

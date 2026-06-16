@@ -8,6 +8,7 @@ from typing import Any
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from gymnasium_2048.agents.supervised_cnn.data import (
     AfterstateDataset,
@@ -40,6 +41,7 @@ class SupervisedTrainingConfig:
     loss: str = "huber"
     target_normalization: bool = True
     symmetry_augmentation: bool = True
+    progress: bool = True
 
 
 def resolve_device(device: str) -> torch.device:
@@ -61,13 +63,20 @@ def _run_epoch(
     target_std: float,
     loss_kind: str,
     optimizer: torch.optim.Optimizer | None,
+    description: str,
+    progress: bool = True,
 ) -> float:
     training = optimizer is not None
     model.train(training)
     total_loss = 0.0
     total_samples = 0
 
-    for boards, targets in loader:
+    batches = (
+        tqdm(loader, desc=description, unit="batch", leave=False)
+        if progress
+        else loader
+    )
+    for boards, targets in batches:
         boards = boards.to(device)
         targets = targets.to(device)
         normalized_targets = (targets - target_mean) / target_std
@@ -81,6 +90,8 @@ def _run_epoch(
         batch_size = int(len(targets))
         total_loss += float(loss.detach().cpu()) * batch_size
         total_samples += batch_size
+        if progress:
+            batches.set_postfix(loss=f"{total_loss / max(total_samples, 1):.6f}")
 
     return total_loss / max(total_samples, 1)
 
@@ -197,6 +208,8 @@ def train_supervised_cnn(
             target_std,
             config.loss,
             optimizer,
+            description=f"Epoch {epoch}/{config.epochs} train",
+            progress=config.progress,
         )
         with torch.no_grad():
             validation_loss = (
@@ -208,6 +221,8 @@ def train_supervised_cnn(
                     target_std,
                     config.loss,
                     None,
+                    description=f"Epoch {epoch}/{config.epochs} validation",
+                    progress=config.progress,
                 )
                 if len(validation_dataset) > 0
                 else train_loss
