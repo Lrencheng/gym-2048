@@ -14,7 +14,6 @@ from gymnasium_2048.agents.ntuple import (
     NTupleNetworkTDPolicySmall,
 )
 from gymnasium_2048.agents.supervised_cnn import SupervisedCNNPolicy
-from gymnasium_2048.agents.supervised_ntuple import SupervisedNTuplePolicy
 
 
 class PredictPolicy(Protocol):
@@ -40,7 +39,6 @@ def parse_args() -> argparse.Namespace:
             "heuristic",
             "expectimax",
             "supervised_cnn",
-            "supervised_ntuple",
         ],
     )
     parser.add_argument(
@@ -118,17 +116,6 @@ def make_policy(
             chance_samples=chance_samples,
             full_chance_empty_threshold=full_chance_empty_threshold,
         )
-    if algo == "supervised_ntuple":
-        if not trained_agent:
-            raise ValueError("supervised_ntuple requires --trained-agent")
-        return SupervisedNTuplePolicy.load(
-            trained_agent,
-            depth=depth,
-            seed=seed,
-            chance_samples=chance_samples,
-            full_chance_empty_threshold=full_chance_empty_threshold,
-        )
-
     algo_policy_map: dict[str, type[NTupleNetworkBasePolicy]] = {
         "ql": NTupleNetworkQLearningPolicy,
         "tdl": NTupleNetworkTDPolicy,

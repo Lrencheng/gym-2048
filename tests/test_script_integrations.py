@@ -1,17 +1,21 @@
 from pathlib import Path
+from concurrent.futures import Future
 
 import gymnasium as gym
 import pytest
 
 from gymnasium_2048.agents.config import ConfigError, default_config_path
-from gymnasium_2048.agents.evaluation import EvaluationConfig, make_policy, run_episodes
+from gymnasium_2048.agents import evaluation
+from gymnasium_2048.agents.evaluation import (
+    EvaluationConfig,
+    make_policy,
+    run_episodes,
+    run_episodes_parallel,
+)
 from gymnasium_2048.agents.registry import EVALUATE_AGENTS, TRAIN_AGENTS
 from gymnasium_2048.agents.supervised_cnn.config import (
     load_supervised_training_config,
     resolve_supervised_output_dir,
-)
-from gymnasium_2048.agents.supervised_ntuple.config import (
-    load_supervised_ntuple_config,
 )
 from scripts.evaluate import parse_args as parse_evaluate_args
 from scripts.train import parse_args as parse_train_args
@@ -42,9 +46,82 @@ def test_evaluate_expectimax_integration_smoke():
     assert illegal_counts[0] == 0
 
 
+def test_parallel_evaluation_progress_reports_episodes(monkeypatch):
+    progress_bars = []
+
+    class FakeTqdm:
+        def __init__(self, iterable=None, **kwargs):
+            self.iterable = iterable
+            self.kwargs = kwargs
+            self.n = 0
+            progress_bars.append(self)
+
+        def __iter__(self):
+            for item in self.iterable:
+                self.update(1)
+                yield item
+
+        def update(self, count=1):
+            self.n += count
+
+        def close(self):
+            pass
+
+    class FakeExecutor:
+        def __init__(self, max_workers):
+            self.max_workers = max_workers
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, traceback):
+            return False
+
+        def map(self, fn, tasks):
+            return [fn(task) for task in tasks]
+
+        def submit(self, fn, task):
+            future = Future()
+            future.set_result(fn(task))
+            return future
+
+    def fake_worker(task):
+        for _seed in task.episode_seeds:
+            if task.progress_queue is not None:
+                task.progress_queue.put(1)
+        count = len(task.episode_seeds)
+        return {
+            "lengths": [1] * count,
+            "rewards": [0] * count,
+            "max_tiles": [1] * count,
+            "total_score": [0] * count,
+            "illegal_counts": [0] * count,
+        }
+
+    monkeypatch.setattr(evaluation, "tqdm", FakeTqdm)
+    monkeypatch.setattr(evaluation, "ProcessPoolExecutor", FakeExecutor)
+    monkeypatch.setattr(evaluation, "_run_eval_worker", fake_worker)
+
+    run_episodes_parallel(
+        env_id="gymnasium_2048:gymnasium_2048/TwentyFortyEight-v0",
+        config=EvaluationConfig(agent="random"),
+        n_episodes=5,
+        seed=13,
+        workers=2,
+        progress=True,
+    )
+
+    assert progress_bars[0].kwargs["total"] == 5
+    assert progress_bars[0].kwargs["unit"] == "episode"
+    assert progress_bars[0].n == 5
+
+
 def test_supervised_agents_are_registered():
-    assert {"supervised_cnn", "supervised_ntuple"} <= TRAIN_AGENTS
-    assert {"supervised_cnn", "supervised_ntuple"} <= EVALUATE_AGENTS
+    removed_agent = "supervised" + "_ntuple"
+    assert "supervised_cnn" in TRAIN_AGENTS
+    assert "supervised_cnn" in EVALUATE_AGENTS
+    assert removed_agent not in TRAIN_AGENTS
+    assert removed_agent not in EVALUATE_AGENTS
 
 
 def test_train_parser_is_generic(monkeypatch):
@@ -53,7 +130,7 @@ def test_train_parser_is_generic(monkeypatch):
         [
             "train.py",
             "--agent",
-            "supervised_ntuple",
+            "supervised_cnn",
             "--config",
             "config.yaml",
             "--print-config",
@@ -62,7 +139,7 @@ def test_train_parser_is_generic(monkeypatch):
 
     args = parse_train_args()
 
-    assert args.agent == "supervised_ntuple"
+    assert args.agent == "supervised_cnn"
     assert args.config == "config.yaml"
     assert args.print_config is True
     assert not hasattr(args, "epochs")
@@ -100,16 +177,6 @@ def test_supervised_cnn_default_config_loads():
     assert config.target_normalization is True
     assert config.symmetry_augmentation is True
     assert printable["resolved_out_dir"].startswith("models")
-
-
-def test_supervised_ntuple_default_config_loads():
-    config, printable = load_supervised_ntuple_config(
-        default_config_path("supervised_ntuple", "train")
-    )
-
-    assert config.pattern_set == "rows_cols"
-    assert config.target_normalization is True
-    assert printable["agent"] == "supervised_ntuple"
 
 
 def test_config_agent_mismatch_raises(tmp_path):

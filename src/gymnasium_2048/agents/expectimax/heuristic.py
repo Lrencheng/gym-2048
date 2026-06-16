@@ -20,6 +20,14 @@ from gymnasium_2048.agents.heuristic.features import (
 
 @dataclass(frozen=True)
 class ExpectimaxHeuristicWeights:
+    #empty_cells: float = 4.287870851551117
+    #smoothness: float = 0.4470264529756058
+    #monotonicity: float = 2.2830195107844484
+    #merge_potential: float = 2.372313959433821
+    #corner_max: float = 2.0435323950218165
+    #max_tile: float = 4.922587
+    #snake: float = 1.5524917719873559
+    #reward: float = 2.168769582941601
     empty_cells: float = 3.0
     smoothness: float = 0.35
     monotonicity: float = 1.2
@@ -28,7 +36,6 @@ class ExpectimaxHeuristicWeights:
     max_tile: float = 0.6
     snake: float = 0.8
     reward: float = 1.0
-
 
 DEFAULT_WEIGHTS = ExpectimaxHeuristicWeights()
 

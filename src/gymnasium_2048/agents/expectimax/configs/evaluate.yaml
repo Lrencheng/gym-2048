@@ -2,24 +2,32 @@ agent: expectimax
 env_id: gymnasium_2048:gymnasium_2048/TwentyFortyEight-v0
 trained_agent: null
 checkpoint: null
-episodes: 20
+episodes: 100
 seed: 42
 title: Expectimax Evaluation
-output_path: figures/Expectimax_eval_snake_sym.png
+output_path: figures/Expectimax_eval_depth1_hand_defaultweights.png
 plot: false
-depth: 2
+depth: 1
 chance_samples: 6
 full_chance_empty_threshold: 6
+workers: 6
 device: cpu
 reward_transform: log2p1
 weights:
-  empty_cells: 4.287870851551117
-  smoothness: 0.4470264529756058
-  monotonicity: 2.2830195107844484
-  merge_potential: 2.372313959433821
-  corner_max: 2.0435323950218165
-  max_tile: 4.922587
-  snake: 1.5524917719873559
-  reward: 2.168769582941601
-
+  #empty_cells: 4.287870851551117
+  #smoothness: 0.4470264529756058
+  #monotonicity: 2.2830195107844484
+  #merge_potential: 2.372313959433821
+  #corner_max: 2.0435323950218165
+  #max_tile: 4.922587
+  #snake: 1.5524917719873559
+  #reward: 2.168769582941601
+  empty_cells:  3.0
+  smoothness:  0.35
+  monotonicity:  1.2
+  merge_potential:  1.0
+  corner_max:  1.4
+  max_tile:  0.6
+  snake:  0.8
+  reward:  1.0
 #snake: 1.5524917719873559

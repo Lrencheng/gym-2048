@@ -10,6 +10,7 @@ plot: false
 depth: 2
 chance_samples: null
 full_chance_empty_threshold: 6
+workers: 1
 device: cpu
 reward_transform: log2p1
 weights:

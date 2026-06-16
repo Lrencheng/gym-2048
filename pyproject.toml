@@ -49,7 +49,6 @@ Repository = "https://github.com/Quentin18/gymnasium-2048"
 "gymnasium_2048.agents.heuristic" = ["configs/*.yaml"]
 "gymnasium_2048.agents.ntuple" = ["configs/*.yaml"]
 "gymnasium_2048.agents.supervised_cnn" = ["configs/*.yaml"]
-"gymnasium_2048.agents.supervised_ntuple" = ["configs/*.yaml"]
 
 [tool.black]
 line-length = 88
