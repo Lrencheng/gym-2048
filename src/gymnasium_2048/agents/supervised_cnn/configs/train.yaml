@@ -1,17 +1,17 @@
 agent: supervised_cnn
-data_path: data/expectimax_afterstates
+data_path: data/expectimax_afterstates_400.npz
 out_root: models/supervised_cnn
-run_name: null
+run_name: cnn_400eps_fast
 out_dir: null
 
-epochs: 40
-batch_size: 2048
-learning_rate: 0.001
+epochs: 16
+batch_size: 8192
+learning_rate: 0.0015
 weight_decay: 0.0001
-validation_fraction: 0.2
+validation_fraction: 0.1
 device: cuda
 seed: 42
-num_workers: 4
+num_workers: 20
 pin_memory: true
 
 input_channels: 16
@@ -20,4 +20,4 @@ hidden_size: 128
 loss: huber
 target_normalization: true
 symmetry_augmentation: true
-progress: true
+# python -m scripts.train --agent supervised_cnn
