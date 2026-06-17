@@ -1,0 +1,14 @@
+﻿agent: SL1
+env_id: gymnasium_2048:gymnasium_2048/TwentyFortyEight-v0
+checkpoint: models/supervise/train4/checkpoints/best.pt
+trained_agent: null
+episodes: 1000
+seed: 42
+title: SL1 Action Probability CNN Greedy Evaluation
+output_path: figures/sl1_greedy_eval.png
+plot: true
+depth: 2
+chance_samples: null
+full_chance_empty_threshold: 6
+device: cpu
+

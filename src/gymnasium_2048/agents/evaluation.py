@@ -28,6 +28,7 @@ from gymnasium_2048.agents.expectimax import (
 )
 from gymnasium_2048.agents.heuristic import HeuristicPolicy, HeuristicWeights
 from gymnasium_2048.agents.ntuple.training import make_ntuple_policy
+from gymnasium_2048.agents.SL1 import SupervisedCNNPolicy as SL1Policy
 from gymnasium_2048.agents.supervised_cnn import SupervisedCNNPolicy
 
 
@@ -93,6 +94,14 @@ def make_policy(config: EvaluationConfig) -> PredictPolicy | None:
             seed=config.seed,
             chance_samples=config.chance_samples,
             full_chance_empty_threshold=config.full_chance_empty_threshold,
+        )
+    if agent == "SL1":
+        if model_path is None:
+            raise ValueError("SL1 evaluation requires checkpoint in YAML")
+        return SL1Policy.load(
+            model_path,
+            device=config.device,
+            seed=config.seed,
         )
     if agent == "supervised_cnn":
         if model_path is None:

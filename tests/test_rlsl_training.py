@@ -22,12 +22,12 @@ def test_rlsl_default_config_loads_and_agent_is_registered():
 
     assert "RLSL" in TRAIN_AGENTS
     assert config.search_depth == 1
-    assert config.train_epochs_per_episode == 1
+    assert config.train_epochs_per_episode == 2
     assert config.batch_size == 8900
     assert config.learning_rate <= 1.0e-4
     assert config.replay_enabled
-    assert config.replay_capacity == 280_000
-    assert config.replay_current_train_max_samples == 70_000
+    assert config.replay_capacity == 800_000
+    assert config.replay_current_train_max_samples == 100_000
     assert config.replay_current_admission_fraction == pytest.approx(0.10)
     assert config.loss_type in {"mse", "huber"}
     assert printable["resolved_out_dir"].startswith("models")

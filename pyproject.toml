@@ -25,17 +25,18 @@ classifiers = [
 ]
 dependencies = [
     "gymnasium==1.2.1",
+    "matplotlib==3.10.7",
+    "numpy>=1.26",
     "pygame==2.6.1",
+    "PyYAML>=6.0",
+    "tqdm==4.67.1",
 ]
 
 [project.optional-dependencies]
 training = [
-    "matplotlib==3.10.7",
     "moviepy==2.2.1",
     "pandas==2.3.3",
-    "PyYAML>=6.0",
     "torch>=2.0",
-    "tqdm==4.67.1",
 ]
 testing = ["pytest"]
 quality = ["black[d]", "isort", "pylint"]
@@ -49,6 +50,7 @@ Repository = "https://github.com/Quentin18/gymnasium-2048"
 "gymnasium_2048.agents.heuristic" = ["configs/*.yaml"]
 "gymnasium_2048.agents.ntuple" = ["configs/*.yaml"]
 "gymnasium_2048.agents.RLSL" = ["configs/*.yaml"]
+"gymnasium_2048.agents.SL1" = ["configs/*.yaml"]
 "gymnasium_2048.agents.supervised_cnn" = ["configs/*.yaml"]
 
 [tool.black]

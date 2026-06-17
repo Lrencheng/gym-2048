@@ -171,8 +171,8 @@ def test_supervised_cnn_default_config_loads():
         default_config_path("supervised_cnn", "train")
     )
 
-    assert config.data_path == "data/expectimax_afterstates"
-    assert config.epochs == 40
+    assert config.data_path == "data/expectimax_afterstates_400.npz"
+    assert config.epochs == 16
     assert config.loss == "huber"
     assert config.target_normalization is True
     assert config.symmetry_augmentation is True

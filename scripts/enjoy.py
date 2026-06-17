@@ -13,6 +13,7 @@ from gymnasium_2048.agents.ntuple import (
     NTupleNetworkTDPolicy,
     NTupleNetworkTDPolicySmall,
 )
+from gymnasium_2048.agents.SL1 import SupervisedCNNPolicy as SL1Policy
 from gymnasium_2048.agents.supervised_cnn import SupervisedCNNPolicy
 
 
@@ -38,6 +39,7 @@ def parse_args() -> argparse.Namespace:
             "tdl-small",
             "heuristic",
             "expectimax",
+            "SL1",
             "supervised_cnn",
         ],
     )
@@ -115,6 +117,14 @@ def make_policy(
             seed=seed,
             chance_samples=chance_samples,
             full_chance_empty_threshold=full_chance_empty_threshold,
+        )
+    if algo == "SL1":
+        if not trained_agent:
+            raise ValueError("SL1 requires --checkpoint")
+        return SL1Policy.load(
+            trained_agent,
+            device=device,
+            seed=seed,
         )
     algo_policy_map: dict[str, type[NTupleNetworkBasePolicy]] = {
         "ql": NTupleNetworkQLearningPolicy,
