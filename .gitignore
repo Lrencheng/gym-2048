@@ -166,6 +166,7 @@ cython_debug/
 *.pt
 *.json
 models/
+figures/
 
 
 
