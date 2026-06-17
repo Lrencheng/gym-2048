@@ -1,0 +1,43 @@
+agent: RLSL
+out_root: models/RLSL
+run_name: fast_decay
+out_dir: null
+
+rounds: 20
+search_depth: 1
+num_eps_per_search: 10
+train_epochs_per_episode: 2
+batch_size: 8900
+learning_rate: 0.0001
+weight_decay: 0.0001
+l2_coeff: null
+loss_type: huber
+value_scale: 1.0
+target_mean: null
+target_std: null
+
+checkpoint_interval: 1
+eval_interval: 1
+eval_episodes: 50
+eval_workers: 4
+
+device: cuda
+seed: 42
+num_workers: 0
+pin_memory: true
+
+input_channels: 16
+conv_channels: 64
+hidden_size: 128
+chance_samples: null
+full_chance_empty_threshold: 8
+symmetry_augmentation: true
+initial_checkpoint: models/supervised_cnn/cnn_400eps_long/checkpoints/best.pt
+
+replay_enabled: true
+replay_teacher_data_path: data/expectimax_afterstates_400.npz
+replay_capacity: 800000
+replay_current_train_max_samples: 100000
+replay_current_admission_fraction: 0.10
+replay_seed: null
+progress: true

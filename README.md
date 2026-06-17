@@ -41,6 +41,7 @@ gymnasium-2048/
 │       ├── expectimax/              # Expectimax 搜索策略与教师数据生成
 │       ├── evolution/               # 遗传算法调参，支持 heuristic / expectimax
 │       ├── supervised_cnn/          # CNN afterstate value 回归
+│       ├── RLSL/                    # Search-improved afterstate value learning
 │       └── ntuple/                  # N-Tuple TD/Q-Learning
 ├── tests/                           # 单元测试与集成冒烟测试
 ├── models/                          # 训练产物
@@ -179,6 +180,25 @@ D:\ANOCONDA\envs\learning\python.exe -m scripts.train --config src/gymnasium_204
 # 用 CNN 作为 expectimax 叶 evaluator 评估
 D:\ANOCONDA\envs\learning\python.exe -m scripts.evaluate --agent supervised_cnn
 ```
+
+## RLSL Search-Improved Value Learning
+
+RLSL 模块位于 `src/gymnasium_2048/agents/RLSL/`，实现单局 self-play 后再做监督学习更新的 search-improved afterstate value learning。当前 `search_depth` 固定支持任务定义中的 `depth=1`：动作选择使用 `immediate_reward + U_search_depth1(afterstate)`，训练标签只保存被实际选中的根 afterstate 的 `U_search_depth1(afterstate)`，不包含当前动作奖励。
+
+默认配置位于 `src/gymnasium_2048/agents/RLSL/configs/train.yaml`。训练产物默认写入 `models/RLSL/`：
+
+```powershell
+# 使用默认 RLSL 配置训练
+D:\ANOCONDA\envs\learning\python.exe -m scripts.train --agent RLSL
+
+# 查看解析后的配置
+D:\ANOCONDA\envs\learning\python.exe -m scripts.train --agent RLSL --print-config
+
+# 使用自定义 YAML
+D:\ANOCONDA\envs\learning\python.exe -m scripts.train --config src/gymnasium_2048/agents/RLSL/configs/train.yaml
+```
+
+训练会持续更新 `checkpoints/last.pt` 和 `checkpoints/best.pt`，并写出 `history.json`、`config.json`。当 `eval_interval > 0` 时，会在 `evaluate_<round>/` 下保存 depth=0 评估的 `.png` 图和 `summary.json`。
 
 ## N-Tuple 强化学习
 

@@ -5,9 +5,9 @@ checkpoint: null
 episodes: 100
 seed: 42
 title: Expectimax Evaluation
-output_path: figures/Expectimax_eval_depth1_hand_defaultweights.png
+output_path: figures/Expectimax_eval_depth0_hand_defaultweights.png
 plot: false
-depth: 1
+depth: 0
 chance_samples: 6
 full_chance_empty_threshold: 6
 workers: 6

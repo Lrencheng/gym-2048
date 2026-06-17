@@ -1,0 +1,524 @@
+(base) PS E:\AIhomework\gymnasium-2048> D:\ANOCONDA\envs\learning\python.exe -m scripts.train --agent RLSL
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+
+====================================================
+  Round 1/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [36364, 36192, 27316, 12236, 25508, 34568, 36240, 36236, 27140, 36388]
+    max_tiles   = [2048, 2048, 2048, 1024, 2048, 2048, 2048, 2048, 2048, 2048]
+    steps       = [1891, 1875, 1420, 734, 1296, 1761, 1886, 1885, 1404, 1885]
+    total steps = 16037
+    dataset     = 57882 samples
+    target_u    = mean 163.43  std 176.52  [-15.03, 3745.71]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.016545
+    l2_loss     = 0.000000
+    total_loss  = 0.016545
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:31<00:00,  1.60episode/s]
+Evaluation summary: episodes=50, mean_score=20705.68, best_score=36320, mean_steps=1127.70, max_tile=2048, 2048_rate=0.440, 4096_rate=0.000, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=31.79
+Max tile distribution: {512: 5, 1024: 23, 2048: 22}
+
+====================================================
+  Round 2/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [36268, 35916, 7272, 27624, 36224, 36284, 60148, 32468, 34532, 32424]
+    max_tiles   = [2048, 2048, 512, 2048, 2048, 2048, 4096, 2048, 2048, 2048]
+    steps       = [1882, 1868, 505, 1464, 1879, 1885, 2781, 1665, 1766, 1661]
+    total steps = 17356
+    dataset     = 62813 samples
+    target_u    = mean 164.68  std 183.01  [-4.32, 3826.79]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.016420
+    l2_loss     = 0.000000
+    total_loss  = 0.016420
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:30<00:00,  1.63episode/s]
+Evaluation summary: episodes=50, mean_score=20533.84, best_score=51476, mean_steps=1113.44, max_tile=4096, 2048_rate=0.440, 4096_rate=0.020, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=31.11
+Max tile distribution: {256: 2, 512: 4, 1024: 22, 2048: 21, 4096: 1}
+
+====================================================
+  Round 3/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [36244, 16304, 67560, 35996, 35200, 16212, 51444, 36148, 16208, 28128]
+    max_tiles   = [2048, 1024, 4096, 2048, 2048, 1024, 4096, 2048, 1024, 2048]
+    steps       = [1870, 970, 3056, 1857, 1782, 956, 2344, 1869, 959, 1475]
+    total steps = 17138
+    dataset     = 61811 samples
+    target_u    = mean 169.57  std 213.96  [-16.32, 5351.31]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.016585
+    l2_loss     = 0.000000
+    total_loss  = 0.016585
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:30<00:00,  1.67episode/s]
+Evaluation summary: episodes=50, mean_score=21030.32, best_score=36176, mean_steps=1146.26, max_tile=2048, 2048_rate=0.460, 4096_rate=0.000, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=30.48
+Max tile distribution: {512: 3, 1024: 24, 2048: 23}
+
+====================================================
+  Round 4/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [34728, 16148, 60192, 36496, 51644, 60420, 15312, 36164, 27380, 59732]
+    max_tiles   = [2048, 1024, 4096, 2048, 4096, 4096, 1024, 2048, 2048, 4096]
+    steps       = [1797, 957, 2774, 1907, 2374, 2807, 880, 1867, 1448, 2752]
+    total steps = 19563
+    dataset     = 70843 samples
+    target_u    = mean 167.18  std 210.73  [-18.86, 5935.87]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.016710
+    l2_loss     = 0.000000
+    total_loss  = 0.016710
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:26<00:00,  1.85episode/s]
+Evaluation summary: episodes=50, mean_score=18518.00, best_score=35800, mean_steps=1034.86, max_tile=2048, 2048_rate=0.280, 4096_rate=0.000, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=27.44
+Max tile distribution: {256: 1, 512: 3, 1024: 32, 2048: 14}
+
+====================================================
+  Round 5/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [16236, 26340, 73760, 36404, 71528, 27184, 36280, 35824, 34476, 34968]
+    max_tiles   = [1024, 2048, 4096, 2048, 4096, 2048, 2048, 2048, 2048, 2048]
+    steps       = [965, 1339, 3301, 1899, 3280, 1405, 1892, 1859, 1751, 1760]
+    total steps = 19451
+    dataset     = 70242 samples
+    target_u    = mean 173.05  std 244.31  [-8.02, 5857.01]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.016852
+    l2_loss     = 0.000000
+    total_loss  = 0.016852
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:26<00:00,  1.86episode/s]
+Evaluation summary: episodes=50, mean_score=19518.32, best_score=34636, mean_steps=1078.62, max_tile=2048, 2048_rate=0.340, 4096_rate=0.000, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=27.31
+Max tile distribution: {512: 4, 1024: 29, 2048: 17}
+
+====================================================
+  Round 6/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [35992, 59076, 36292, 36180, 71356, 35944, 32448, 56536, 36132, 34592]
+    max_tiles   = [2048, 4096, 2048, 2048, 4096, 2048, 2048, 4096, 2048, 2048]
+    steps       = [1857, 2735, 1895, 1861, 3247, 1846, 1671, 2593, 1866, 1775]
+    total steps = 21346
+    dataset     = 77050 samples
+    target_u    = mean 170.27  std 226.43  [-8.74, 6116.79]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.016817
+    l2_loss     = 0.000000
+    total_loss  = 0.016817
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:27<00:00,  1.83episode/s]
+Evaluation summary: episodes=50, mean_score=19650.00, best_score=35868, mean_steps=1080.50, max_tile=2048, 2048_rate=0.380, 4096_rate=0.000, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=27.86
+Max tile distribution: {512: 3, 1024: 28, 2048: 19}
+
+====================================================
+  Round 7/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [67520, 36276, 35776, 71348, 74284, 16284, 36192, 60572, 16148, 36288]
+    max_tiles   = [4096, 2048, 2048, 4096, 4096, 1024, 2048, 4096, 1024, 2048]
+    steps       = [3055, 1883, 1825, 3271, 3370, 957, 1874, 2822, 944, 1887]
+    total steps = 21888
+    dataset     = 78926 samples
+    target_u    = mean 168.28  std 213.16  [-13.80, 6374.98]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.016914
+    l2_loss     = 0.000000
+    total_loss  = 0.016914
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:27<00:00,  1.81episode/s]
+Evaluation summary: episodes=50, mean_score=19671.12, best_score=36032, mean_steps=1083.58, max_tile=2048, 2048_rate=0.380, 4096_rate=0.000, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=28.12
+Max tile distribution: {512: 7, 1024: 24, 2048: 19}
+
+====================================================
+  Round 8/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [27556, 16216, 27508, 32452, 71268, 37180, 36204, 16156, 36556, 27252]
+    max_tiles   = [2048, 1024, 2048, 2048, 4096, 2048, 2048, 1024, 2048, 2048]
+    steps       = [1443, 961, 1439, 1663, 3258, 1945, 1882, 959, 1918, 1425]
+    total steps = 16893
+    dataset     = 61070 samples
+    target_u    = mean 164.51  std 206.00  [-23.87, 5478.16]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.016761
+    l2_loss     = 0.000000
+    total_loss  = 0.016761
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:27<00:00,  1.79episode/s]
+Evaluation summary: episodes=50, mean_score=20218.56, best_score=36084, mean_steps=1108.90, max_tile=2048, 2048_rate=0.420, 4096_rate=0.000, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=28.43
+Max tile distribution: {512: 7, 1024: 22, 2048: 21}
+
+====================================================
+  Round 9/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [60328, 36192, 36180, 36048, 60236, 16164, 27280, 16136, 36104, 58776]
+    max_tiles   = [4096, 2048, 2048, 2048, 4096, 1024, 2048, 1024, 2048, 4096]
+    steps       = [2794, 1879, 1872, 1855, 2799, 960, 1425, 952, 1869, 2695]
+    total steps = 19100
+    dataset     = 69079 samples
+    target_u    = mean 163.40  std 183.20  [-14.26, 5508.99]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.016767
+    l2_loss     = 0.000000
+    total_loss  = 0.016767
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:25<00:00,  1.94episode/s]
+Evaluation summary: episodes=50, mean_score=18657.92, best_score=35480, mean_steps=1031.42, max_tile=2048, 2048_rate=0.360, 4096_rate=0.000, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=26.17
+Max tile distribution: {256: 2, 512: 4, 1024: 26, 2048: 18}
+
+====================================================
+  Round 10/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [73976, 16248, 36180, 36188, 36044, 27244, 60432, 36296, 36148, 27364]
+    max_tiles   = [4096, 1024, 2048, 2048, 2048, 2048, 4096, 2048, 2048, 2048]
+    steps       = [3357, 964, 1871, 1865, 1848, 1426, 2799, 1884, 1865, 1432]
+    total steps = 19311
+    dataset     = 69638 samples
+    target_u    = mean 168.81  std 209.62  [-16.98, 6106.59]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.017192
+    l2_loss     = 0.000000
+    total_loss  = 0.017192
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:28<00:00,  1.77episode/s]
+Evaluation summary: episodes=50, mean_score=20159.84, best_score=36204, mean_steps=1113.80, max_tile=2048, 2048_rate=0.340, 4096_rate=0.000, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=28.73
+Max tile distribution: {512: 4, 1024: 29, 2048: 17}
+
+====================================================
+  Round 11/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [28156, 60984, 16256, 26444, 16684, 36240, 32564, 34528, 36128, 60052]
+    max_tiles   = [2048, 4096, 1024, 2048, 1024, 2048, 2048, 2048, 2048, 4096]
+    steps       = [1468, 2841, 966, 1360, 983, 1888, 1650, 1768, 1856, 2788]
+    total steps = 17568
+    dataset     = 63409 samples
+    target_u    = mean 167.43  std 205.99  [-1.83, 7087.61]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.017163
+    l2_loss     = 0.000000
+    total_loss  = 0.017163
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:26<00:00,  1.87episode/s]
+Evaluation summary: episodes=50, mean_score=18684.96, best_score=51456, mean_steps=1032.64, max_tile=4096, 2048_rate=0.320, 4096_rate=0.020, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=27.12
+Max tile distribution: {256: 1, 512: 6, 1024: 27, 2048: 15, 4096: 1}
+
+====================================================
+  Round 12/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [32412, 32188, 35696, 36168, 60332, 36188, 36220, 60384, 35828, 36280]
+    max_tiles   = [2048, 2048, 2048, 2048, 4096, 2048, 2048, 4096, 2048, 2048]
+    steps       = [1659, 1642, 1851, 1877, 2805, 1873, 1882, 2802, 1833, 1875]
+    total steps = 20099
+    dataset     = 72401 samples
+    target_u    = mean 168.87  std 197.46  [0.00, 6722.81]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.017180
+    l2_loss     = 0.000000
+    total_loss  = 0.017180
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:27<00:00,  1.80episode/s]
+Evaluation summary: episodes=50, mean_score=18879.52, best_score=35120, mean_steps=1049.10, max_tile=2048, 2048_rate=0.340, 4096_rate=0.000, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=28.20
+Max tile distribution: {512: 5, 1024: 28, 2048: 17}
+
+====================================================
+  Round 13/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [16200, 16156, 35948, 59992, 36012, 36288, 51416, 16360, 32392, 32492]
+    max_tiles   = [1024, 1024, 2048, 4096, 2048, 2048, 4096, 1024, 2048, 2048]
+    steps       = [952, 950, 1851, 2799, 1866, 1898, 2353, 979, 1653, 1676]
+    total steps = 16977
+    dataset     = 61359 samples
+    target_u    = mean 166.36  std 181.80  [-15.01, 4876.24]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.017195
+    l2_loss     = 0.000000
+    total_loss  = 0.017195
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:26<00:00,  1.88episode/s]
+Evaluation summary: episodes=50, mean_score=19575.52, best_score=34448, mean_steps=1080.36, max_tile=2048, 2048_rate=0.340, 4096_rate=0.000, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=27.14
+Max tile distribution: {512: 3, 1024: 30, 2048: 17}
+
+====================================================
+  Round 14/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [51660, 60320, 34520, 36412, 60456, 27424, 27192, 32260, 36392, 36140]
+    max_tiles   = [4096, 4096, 2048, 2048, 4096, 2048, 2048, 2048, 2048, 2048]
+    steps       = [2346, 2787, 1761, 1897, 2808, 1432, 1413, 1645, 1904, 1867]
+    total steps = 19860
+    dataset     = 71656 samples
+    target_u    = mean 172.26  std 227.40  [0.00, 6114.89]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.017462
+    l2_loss     = 0.000000
+    total_loss  = 0.017462
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:28<00:00,  1.77episode/s]
+Evaluation summary: episodes=50, mean_score=19714.08, best_score=36000, mean_steps=1090.00, max_tile=2048, 2048_rate=0.320, 4096_rate=0.000, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=28.75
+Max tile distribution: {512: 3, 1024: 31, 2048: 16}
+
+====================================================
+  Round 15/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [51668, 60196, 67576, 71500, 37072, 16256, 27192, 60400, 36332, 58780]
+    max_tiles   = [4096, 4096, 4096, 4096, 2048, 1024, 2048, 4096, 2048, 4096]
+    steps       = [2353, 2799, 3048, 3274, 1919, 970, 1412, 2809, 1894, 2701]
+    total steps = 23179
+    dataset     = 83573 samples
+    target_u    = mean 175.98  std 227.75  [-13.58, 7776.53]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.017597
+    l2_loss     = 0.000000
+    total_loss  = 0.017597
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:27<00:00,  1.81episode/s]
+Evaluation summary: episodes=50, mean_score=19965.04, best_score=36280, mean_steps=1097.90, max_tile=2048, 2048_rate=0.380, 4096_rate=0.000, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=28.15
+Max tile distribution: {512: 3, 1024: 28, 2048: 19}
+
+====================================================
+  Round 16/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [32144, 35808, 36468, 36296, 35660, 36140, 32236, 35976, 56752, 35960]
+    max_tiles   = [2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 4096, 2048]
+    steps       = [1630, 1828, 1894, 1889, 1854, 1882, 1650, 1869, 2610, 1862]
+    total steps = 18968
+    dataset     = 68387 samples
+    target_u    = mean 168.77  std 207.53  [-7.56, 4225.25]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.017532
+    l2_loss     = 0.000000
+    total_loss  = 0.017532
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:29<00:00,  1.72episode/s]
+Evaluation summary: episodes=50, mean_score=23497.92, best_score=50928, mean_steps=1253.04, max_tile=4096, 2048_rate=0.580, 4096_rate=0.020, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=29.60
+Max tile distribution: {512: 5, 1024: 16, 2048: 28, 4096: 1}
+
+====================================================
+  Round 17/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [51516, 36192, 59752, 16180, 36336, 58616, 35456, 36716, 16252, 32320]
+    max_tiles   = [4096, 2048, 4096, 1024, 2048, 4096, 2048, 2048, 1024, 2048]
+    steps       = [2362, 1879, 2757, 963, 1878, 2685, 1820, 1918, 959, 1646]
+    total steps = 18867
+    dataset     = 68157 samples
+    target_u    = mean 165.48  std 192.36  [-5.53, 6788.41]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.017426
+    l2_loss     = 0.000000
+    total_loss  = 0.017426
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:27<00:00,  1.80episode/s]
+Evaluation summary: episodes=50, mean_score=19938.00, best_score=36676, mean_steps=1092.12, max_tile=2048, 2048_rate=0.420, 4096_rate=0.000, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=28.32
+Max tile distribution: {256: 1, 512: 4, 1024: 24, 2048: 21}
+
+====================================================
+  Round 18/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [16216, 36392, 36296, 36620, 35540, 35612, 35676, 35496, 27256, 27264]
+    max_tiles   = [1024, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048, 2048]
+    steps       = [953, 1907, 1884, 1908, 1829, 1846, 1845, 1818, 1416, 1422]
+    total steps = 16828
+    dataset     = 60878 samples
+    target_u    = mean 164.85  std 186.85  [-5.64, 3793.45]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.017306
+    l2_loss     = 0.000000
+    total_loss  = 0.017306
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:28<00:00,  1.73episode/s]
+Evaluation summary: episodes=50, mean_score=20509.28, best_score=36184, mean_steps=1121.34, max_tile=2048, 2048_rate=0.380, 4096_rate=0.000, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=29.36
+Max tile distribution: {512: 3, 1024: 28, 2048: 19}
+
+====================================================
+  Round 19/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [32292, 36256, 34400, 61040, 67584, 16204, 56004, 27476, 60396, 32144]
+    max_tiles   = [2048, 2048, 2048, 4096, 4096, 1024, 4096, 2048, 4096, 2048]
+    steps       = [1652, 1875, 1747, 2879, 3051, 962, 2526, 1434, 2807, 1636]
+    total steps = 20569
+    dataset     = 74210 samples
+    target_u    = mean 172.15  std 236.33  [-6.67, 5957.81]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.017932
+    l2_loss     = 0.000000
+    total_loss  = 0.017932
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:27<00:00,  1.79episode/s]
+Evaluation summary: episodes=50, mean_score=20268.56, best_score=34668, mean_steps=1105.54, max_tile=2048, 2048_rate=0.420, 4096_rate=0.000, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=28.42
+Max tile distribution: {512: 4, 1024: 25, 2048: 21}
+
+====================================================
+  Round 20/20
+====================================================
+  Search complete (10 episodes):
+    scores      = [27468, 36116, 36508, 7144, 59676, 16148, 35292, 60728, 27308, 71568]
+    max_tiles   = [2048, 2048, 2048, 512, 4096, 1024, 2048, 4096, 2048, 4096]
+    steps       = [1442, 1865, 1900, 486, 2754, 955, 1811, 2841, 1412, 3283]
+    total steps = 18749
+    dataset     = 67845 samples
+    target_u    = mean 171.62  std 207.01  [0.00, 6154.06]
+  SL complete:                                                                                                                                                                 
+    reg_loss    = 0.017717
+    l2_loss     = 0.000000
+    total_loss  = 0.017717
+Eval (4 workers):   0%|                                                                                                                            | 0/50 [00:00<?, ?episode/s]D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+D:\ANOCONDA\envs\learning\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Eval (4 workers): 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 50/50 [00:30<00:00,  1.65episode/s]
+Evaluation summary: episodes=50, mean_score=21209.92, best_score=37276, mean_steps=1152.14, max_tile=2048, 2048_rate=0.480, 4096_rate=0.000, 8192_rate=0.000, illegal_action_rate=0.00000, runtime_seconds=30.80
+Max tile distribution: {256: 1, 512: 4, 1024: 21, 2048: 24}
+RLSL search-improved value training complete: device=cuda, best_metric=23497.92, best=models\RLSL\multi_eps\checkpoints\best.pt

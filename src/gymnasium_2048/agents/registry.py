@@ -8,6 +8,7 @@ from gymnasium_2048.agents.config import resolve_agent
 
 TRAIN_AGENTS = {
     "ql",
+    "RLSL",
     "tdl",
     "tdl-small",
     "supervised_cnn",
@@ -28,6 +29,14 @@ def run_train_command(
     print_config: bool = False,
 ) -> Any:
     resolved_agent = resolve_agent(agent, config_path, TRAIN_AGENTS)
+    if resolved_agent == "RLSL":
+        from gymnasium_2048.agents.RLSL.config import train_rlsl_from_yaml
+
+        return train_rlsl_from_yaml(
+            config_path=config_path,
+            agent=resolved_agent,
+            print_config=print_config,
+        )
     if resolved_agent == "supervised_cnn":
         from gymnasium_2048.agents.supervised_cnn.config import train_supervised_from_yaml
 
